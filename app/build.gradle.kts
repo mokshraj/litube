@@ -12,8 +12,11 @@ android {
         targetSdk = 34
         versionCode = 14
         versionName = "1.4.9"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            // "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+            abiFilters.addAll(listOf("x86", "x86_64", "armeabi-v7a", "arm64-v8a"))
+        }
     }
 
     buildTypes {
@@ -43,7 +46,10 @@ android {
 }
 
 dependencies {
-    implementation(libs.java.youtube.downloader)
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    implementation(libs.library)
+    implementation(libs.ffmpeg)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

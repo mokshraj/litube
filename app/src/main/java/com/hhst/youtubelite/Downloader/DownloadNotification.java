@@ -80,10 +80,10 @@ public class DownloadNotification {
         notificationManager.notify(notificationId, builder.build());
     }
 
-    public void updateProgress(int progress) {
+    public void updateProgress(int progress, String showing) {
         if (builder != null) {
             builder.setProgress(100, progress, false)
-                    .setSubText(context.getString(R.string.progress) + progress + "%");
+                    .setSubText(String.format("%s %s", showing,  progress + "%"));
             notificationManager.notify(notificationId, builder.build());
         }
     }
@@ -154,17 +154,6 @@ public class DownloadNotification {
 
     }
 
-    // this will call during the video-audio merge after the download
-    public void afterDownload() {
-        if (builder != null) {
-            builder.setContentTitle(context.getString(R.string.download_finished_merging))
-                    .setProgress(100, 100, true);
-
-            notificationManager.notify(notificationId, builder.build());
-
-        }
-
-    }
 
     public void clearDownload() {
         notificationManager.cancel(notificationId);

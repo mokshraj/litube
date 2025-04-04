@@ -5,17 +5,23 @@ junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
 appcompat = "1.6.1"
+library = "0.17.2"
+lombok = "1.18.38"
 material = "1.10.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
 swiperefreshlayout = "1.1.0"
 
 [libraries]
+aria2c = { module = "io.github.junkfood02.youtubedl-android:aria2c", version.ref = "library" }
+ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version.ref = "library" }
 java-youtube-downloader = { module = "com.github.sealedtx:java-youtube-downloader", version.ref = "javaYoutubeDownloader" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+library = { module = "io.github.junkfood02.youtubedl-android:library", version.ref = "library" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }

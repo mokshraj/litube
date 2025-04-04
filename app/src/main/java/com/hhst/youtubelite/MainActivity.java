@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +28,9 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.hhst.youtubelite.Downloader.DownloadService;
 import com.hhst.youtubelite.webview.YWebview;
+import com.yausername.ffmpeg.FFmpeg;
+import com.yausername.youtubedl_android.YoutubeDL;
+import com.yausername.youtubedl_android.YoutubeDLException;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,11 +80,12 @@ public class MainActivity extends AppCompatActivity {
 
         clearCache();
         startDownloadService();
+        initializeDownloader();
     }
 
     public final int REQUEST_NOTIFICATION_CODE = 1;
 
-    public void requestPermissions() {
+    private void requestPermissions() {
 
         // check and require post-notification permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -91,9 +96,7 @@ public class MainActivity extends AppCompatActivity {
                         REQUEST_NOTIFICATION_CODE
                 );
             }
-        }
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        } else {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
 
@@ -102,19 +105,10 @@ public class MainActivity extends AppCompatActivity {
                         REQUEST_NOTIFICATION_CODE
                 );
             }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_NOTIFICATION_CODE
-                );
-            }
-
         }
     }
 
-    public void loadScript(){
+    private void loadScript(){
         AssetManager assetManager = getAssets();
 
         List<String> res_pths = Arrays.asList("css", "js");
@@ -170,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    public void clearCache() {
+    private void clearCache() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             File[] cacheDirs = {getCacheDir(), new File(getCacheDir(), "temp")};
@@ -196,7 +190,8 @@ public class MainActivity extends AppCompatActivity {
 
     public DownloadService downloadService;
 
-    public void startDownloadService() {
+    private void startDownloadService() {
+        // bind the download service
         ServiceConnection connection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -210,6 +205,27 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = new Intent(this, DownloadService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    private void initializeDownloader() {
+
+        new Thread(() -> {
+            // Initialize the downloader
+            try {
+                YoutubeDL.getInstance().init(this);
+                FFmpeg.getInstance().init(this);
+            } catch (YoutubeDLException e) {
+                Toast.makeText(this, getString(R.string.downloader_initialize_error), Toast.LENGTH_SHORT)
+                        .show();
+            }
+            // try to update yt-dlp
+            try {
+                YoutubeDL.getInstance().updateYoutubeDL(this, YoutubeDL.UpdateChannel._STABLE);
+            } catch (YoutubeDLException e) {
+                Log.e("unable to update yt-dlp", Log.getStackTraceString(e));
+            }
+
+        }).start();
     }
 
     @Override
