@@ -17,8 +17,8 @@ public class DownloadResponse {
     private final Context context;
     private final AtomicInteger state;
 
-    private final File audioFile;
-    private final File videoFile;
+    private File audioFile;
+    private File videoFile;
     private final File output;
 
     public static final int INITIALIZED = 0;
@@ -48,17 +48,11 @@ public class DownloadResponse {
 
         state.set(DOWNLOADING);
         if (audioResponse != null) {
-            audioResponse.data();
-            if (!audioResponse.ok()) {
-                return;
-            }
+            audioFile = audioResponse.data();
         }
 
         if (videoResponse != null) {
-            videoResponse.data();
-            if (!videoResponse.ok()) {
-                return;
-            }
+            videoFile = videoResponse.data();
         }
 
         try {

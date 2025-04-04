@@ -181,12 +181,21 @@ public class DownloadService extends Service {
         // Submit task for execution
         download_executor.submit(() -> response.execute((video, audio, output) -> {
             // on download finished
+            if (audio == null) {
+                notification.cancelDownload(getString(R.string.failed_to_download));
+                showToast(getString(R.string.failed_to_download));
+                Log.e("fail to download audio file", "audio file is null");
+                return;
+            }
             if (task.isAudio) {
                 // Move audio file
                 try {
                     copyFile(audio, output);
                 } catch (IOException e) {
+                    notification.cancelDownload(getString(R.string.audio_copy_error));
+                    showToast(getString(R.string.audio_copy_error));
                     Log.e("Error copying audio file", Log.getStackTraceString(e));
+                    return;
                 }
 
                 notification.completeDownload(
@@ -195,6 +204,12 @@ public class DownloadService extends Service {
                         "audio/*"
                 );
             } else {
+                if (video == null) {
+                    notification.cancelDownload(getString(R.string.failed_to_download));
+                    showToast(getString(R.string.failed_to_download));
+                    Log.e("fail to download video file", "video file is null");
+                    return;
+                }
                 notification.afterDownload();
                 try {
                     AudioVideoMuxer muxer = new AudioVideoMuxer();
@@ -207,6 +222,7 @@ public class DownloadService extends Service {
                 } catch (IOException e) {
                     notification.cancelDownload(getString(R.string.merge_error));
                     showToast(getString(R.string.merge_error));
+                    Log.e("merge error", Log.getStackTraceString(e));
                     return;
                 }
 

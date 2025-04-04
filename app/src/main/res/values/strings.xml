@@ -12,8 +12,8 @@
     <string name="select_something_first">Select something first</string>
     <string name="retry">Retry</string>
     <string name="progress">"Progress: "</string>
-    <string name="download_complete">Download complete</string>
-    <string name="download_canceled">Download Canceled</string>
+    <string name="download_complete">"Download complete "</string>
+    <string name="download_canceled">"Download Canceled "</string>
     <string name="thumbnail_has_been_saved_to">"Thumbnail has been saved to:  "</string>
     <string name="download_finished">Download finished:  \"%s\" has been saved to \"%s\"</string>
     <string name="retry_download">"Retry Download:  "</string>
@@ -30,4 +30,5 @@
     <string name="file_deleted">File deleted</string>
     <string name="audio_only">Audio Only</string>
     <string name="timeout_occurred_while_downloading_retrying">Timeout occurred while downloading, retrying...</string>
+    <string name="audio_copy_error">Failed to copy audio file to public directory</string>
 </resources>

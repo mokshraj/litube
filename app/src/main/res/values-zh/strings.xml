@@ -11,8 +11,8 @@
     <string name="select_something_first">请先选择</string>
     <string name="retry">重试</string>
     <string name="progress">"进度:  "</string>
-    <string name="download_complete">下载完成</string>
-    <string name="download_canceled">下载被取消</string>
+    <string name="download_complete">"下载完成 "</string>
+    <string name="download_canceled">"下载被取消 "</string>
     <string name="thumbnail_has_been_saved_to">"封面已被保存至:  "</string>
     <string name="download_finished">下载完成:  \"%s\" 已被保存到 \"%s\"</string>
     <string name="retry_download">重新下载</string>
@@ -29,4 +29,5 @@
     <string name="delete">删除</string>
     <string name="file_deleted">文件被删除</string>
     <string name="timeout_occurred_while_downloading_retrying">"下载超时, 尝试重试... "</string>
+    <string name="audio_copy_error">将音频文件移动到公开目录失败</string>
 </resources>
