@@ -43,4 +43,7 @@
 -dontwarn org.joda.time.format.DateTimeFormat
 -dontwarn org.joda.time.format.DateTimeFormatter
 -dontwarn springfox.documentation.spring.web.json.Json
+
+-dontobfuscate
 -keep class com.yausername.** { *; }
+-keep class org.apache.commons.compress.archivers.zip.** { *; }
