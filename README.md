@@ -16,7 +16,7 @@ litube
 
 ## Screenshots
 
-<img title="" src="https://github.com/HydeYYHH/litube/blob/master/fastlane/metadata/android/en-US/images/photoScreens/screenshot1.jpg" alt="" width="250"><img title="" src="https://github.com/HydeYYHH/litube/blob/master/fastlane/metadata/android/en-US/images/photoScreens/screenshot2.jpg" alt="" width="250"><img title="" src="https://github.com/HydeYYHH/litube/blob/master/fastlane/metadata/android/en-US/images/photoScreens/screenshot3.jpg" alt="" width="250">
+<img title="" src="https://github.com/HydeYYHH/litube/blob/master/fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" alt="" width="250"><img title="" src="https://github.com/HydeYYHH/litube/blob/master/fastlane/metadata/android/en-US/images/photoScreens/2.jpg" alt="" width="250"><img title="" src="https://github.com/HydeYYHH/litube/blob/master/fastlane/metadata/android/en-US/images/photoScreens/3.jpg" alt="" width="250">
 
 
 
