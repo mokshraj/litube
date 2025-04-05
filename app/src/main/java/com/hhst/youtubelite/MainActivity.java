@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
     public final int REQUEST_NOTIFICATION_CODE = 1;
 
-    private void requestPermissions() {
+    public void requestPermissions() {
 
         // check and require post-notification permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -164,22 +164,21 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    // clear cache
     private void clearCache() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            File[] cacheDirs = {getCacheDir(), new File(getCacheDir(), "temp")};
-            for (File cacheDir : cacheDirs) {
-                if (cacheDir.exists() && cacheDir.isDirectory()) {
-                    File[] files = cacheDir.listFiles(file -> file.isFile() &&
-                            (file.getName().endsWith(".mp4") || file.getName().endsWith(".m4a"))
-                    );
-                    if (files != null) {
-                        for (File file : files) {
-                            boolean deleted = file.delete();
-                            if (!deleted) {
-                                Log.w("ClearCache", "Failed to delete file: " +
-                                        file.getAbsolutePath());
-                            }
+            File cacheDir = getCacheDir();
+            if (cacheDir.exists() && cacheDir.isDirectory()) {
+                File[] files = cacheDir.listFiles(file -> file.isFile() &&
+                        (file.getName().endsWith(".mp4") || file.getName().endsWith(".m4a"))
+                );
+                if (files != null) {
+                    for (File file : files) {
+                        boolean deleted = file.delete();
+                        if (!deleted) {
+                            Log.w("ClearCache", "Failed to delete file: " +
+                                    file.getAbsolutePath());
                         }
                     }
                 }

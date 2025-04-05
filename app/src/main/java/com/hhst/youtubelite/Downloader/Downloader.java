@@ -41,7 +41,6 @@ public class Downloader {
             File output,
             Function3<Float, Long, String, Unit> callback
     ) throws YoutubeDL.CanceledException, InterruptedException, YoutubeDLException {
-        if (processId == null) throw new RuntimeException("video url cannot be parsed");
         YoutubeDLRequest request = new YoutubeDLRequest(video_url);
         request.addOption("--no-mtime");
         request.addOption("--concurrent-fragments", 8);

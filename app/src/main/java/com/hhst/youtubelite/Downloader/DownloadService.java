@@ -27,9 +27,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
@@ -37,13 +39,15 @@ import java.util.regex.Pattern;
 public class DownloadService extends Service {
 
     public final int max_download_tasks = 5;
-    private HashMap<Integer, DownloadTask> download_tasks;
+    private ConcurrentHashMap<Integer, DownloadTask> download_tasks;
     private ExecutorService download_executor;
+
+    private final Handler notificationHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate() {
         super.onCreate();
-        download_tasks = new HashMap<>();
+        download_tasks = new ConcurrentHashMap<>();
         download_executor = Executors.newFixedThreadPool(max_download_tasks);
     }
 
@@ -134,7 +138,7 @@ public class DownloadService extends Service {
         }
     }
 
-    private void scheduleDownload(DownloadTask task) {
+    private void executeDownload(DownloadTask task) {
         // Generate common properties
         String fileName = task.getIsAudio() ? String.format("(audio only) %s", task.getFileName())
                 : task.getFileName();
@@ -142,7 +146,8 @@ public class DownloadService extends Service {
         DownloadNotification notification = new DownloadNotification(this, taskId);
 
         // Show notification
-        notification.showNotification(fileName, 0);
+        notificationHandler.post(() -> notification.showNotification(fileName, 0));
+
 
         task.setNotification(notification);
         download_tasks.put(taskId, task);
@@ -154,7 +159,8 @@ public class DownloadService extends Service {
                     task.getVideoFormat(),
                     new File(getCacheDir(), task.getFileName()),
                     (progress, eta, information) -> {
-                        notification.updateProgress(Math.round(progress), information);
+                       notificationHandler.post(()
+                               -> notification.updateProgress(Math.round(progress), information));
                         return null;
                     });
         } catch (YoutubeDLException e) {
@@ -185,17 +191,17 @@ public class DownloadService extends Service {
             try {
                 moveFile(audio, output);
             } catch (IOException e) {
-                notification.cancelDownload(getString(R.string.audio_copy_error));
+                notificationHandler.post(()
+                        -> notification.cancelDownload(getString(R.string.audio_copy_error)));
                 showToast(getString(R.string.audio_copy_error));
                 Log.e("Error moving audio file", Log.getStackTraceString(e));
                 return;
             }
-
-            notification.completeDownload(
+            notificationHandler.post(() -> notification.completeDownload(
                     String.format(getString(R.string.download_finished), fileName, output.getPath()),
                     output,
                     "audio/*"
-            );
+            ));
         } else {
             output = new File(task.getOutputDir(), task.getFileName() + ".mp4");
             task.setOutput(output);
@@ -203,36 +209,40 @@ public class DownloadService extends Service {
             try {
                 moveFile(video, output);
             } catch (IOException e) {
-                notification.cancelDownload(getString(R.string.video_copy_error));
+                notificationHandler.post(() ->
+                        notification.cancelDownload(getString(R.string.video_copy_error)));
                 showToast(getString(R.string.video_copy_error));
                 Log.e("Error moving video file", Log.getStackTraceString(e));
                 return;
             }
-
-            notification.completeDownload(
-                    String.format(getString(R.string.download_finished), fileName, output.getPath()),
-                    output,
-                    "video/*"
-            );
+            notificationHandler.post(() ->
+                    notification.completeDownload(
+                            String.format(getString(R.string.download_finished), fileName, output.getPath()),
+                            output,
+                            "video/*"
+                    ));
         }
 
         showToast(String.format(getString(R.string.download_finished), fileName, output.getPath()));
+        // notify to scan
+        MediaScannerConnection.scanFile(this, new String[]{output.getAbsolutePath()}, null, null);
         task.setState(DownloaderState.FINISHED);
     }
-
     private void moveFile(File source, File destination) throws IOException {
-        try (FileInputStream input = new FileInputStream(source);
-             FileOutputStream output = new FileOutputStream(destination)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = input.read(buffer)) != -1) {
-                output.write(buffer, 0, bytesRead);
-            }
-            boolean ignored = source.delete();
+        try (FileInputStream fis = new FileInputStream(source);
+             FileChannel inChannel = fis.getChannel();
+             FileOutputStream fos = new FileOutputStream(destination);
+             FileChannel outChannel = fos.getChannel()) {
+
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+
+        }
+
+        if (!source.delete()) {
+            Log.w("file delete error", "Failed to delete source file: " + source.getAbsolutePath());
         }
     }
 
-    private File tempDir;
 
     public void initiateDownload(DownloadTask task) {
         download_executor.submit(() -> {
@@ -244,21 +254,15 @@ public class DownloadService extends Service {
                 return;
             }
 
-            // check and create temp directory
-            tempDir = new File(getCacheDir(), "temp");
-            if (!tempDir.exists() && !tempDir.mkdir()) {
-                return;
-            }
-
             // replace illegal character in filename
             task.setFileName(sanitizeFileName(task.getFileName()));
 
             // download thumbnail
-            downloadThumbnail(task.getThumbnail(), new File(outputDir, task.getFileName() + ".jpg"));
+            downloadThumbnail(task.getThumbnail(), new File(outputDir, task.getFileName() + ".png"));
 
             // download audio
             if (task.getIsAudio()) {
-                scheduleDownload(new DownloadTask(
+                executeDownload(new DownloadTask(
                         task.getUrl(),
                         task.getFileName(),
                         null,
@@ -271,17 +275,20 @@ public class DownloadService extends Service {
                 ));
             }
             // download video
-            scheduleDownload(new DownloadTask(
-                    task.getUrl(),
-                    task.getFileName(),
-                    null,
-                    task.getVideoFormat(),
-                    false,
-                    DownloaderState.RUNNING,
-                    outputDir,
-                    null,
-                    null
-            ));
+            if (task.getVideoFormat() != null) {
+                executeDownload(new DownloadTask(
+                        task.getUrl(),
+                        task.getFileName(),
+                        null,
+                        task.getVideoFormat(),
+                        false,
+                        DownloaderState.RUNNING,
+                        outputDir,
+                        null,
+                        null
+                ));
+            }
+
         });
     }
 
@@ -339,7 +346,7 @@ public class DownloadService extends Service {
 
         if (task.getIsAudio()) {
             // initiate new download task for the video
-            scheduleDownload(new DownloadTask(
+            executeDownload(new DownloadTask(
                     task.getUrl(),
                     task.getFileName(),
                     null,
@@ -351,7 +358,7 @@ public class DownloadService extends Service {
                     null
             ));
         } else {
-            scheduleDownload(new DownloadTask(
+            executeDownload(new DownloadTask(
                     task.getUrl(),
                     task.getFileName(),
                     null,
@@ -397,10 +404,19 @@ public class DownloadService extends Service {
 
     @Override
     public void onDestroy() {
+        // clear all notifications
         if (!download_tasks.isEmpty()) {
             Objects.requireNonNull(download_tasks.get(0)).getNotification().clearAll();
-
         }
+
+        // cancel all task
+        for (Map.Entry<Integer, DownloadTask> entry : download_tasks.entrySet()) {
+            DownloadTask task = entry.getValue();
+            if (task.getState() == DownloaderState.RUNNING) {
+                Downloader.cancel("download_task" + entry.getKey());
+            }
+        }
+
         if (download_executor != null && !download_executor.isShutdown()) {
             download_executor.shutdownNow();
         }

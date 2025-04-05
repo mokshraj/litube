@@ -135,6 +135,9 @@ public class DownloadDialog {
 
         // on thumbnail button clicked
         buttonThumbnail.setOnClickListener(v -> {
+            if (details == null) {
+                return;
+            }
             isThumbnailSelected.set(!isThumbnailSelected.get());
             buttonThumbnail.setSelected(isThumbnailSelected.get());
             if (isThumbnailSelected.get()) {
@@ -146,6 +149,9 @@ public class DownloadDialog {
 
         // on audio-only button clicked
         buttonAudio.setOnClickListener(v -> {
+            if (details == null) {
+                return;
+            }
             isAudioSelected.set(!isAudioSelected.get());
             buttonAudio.setSelected(isAudioSelected.get());
             if (isAudioSelected.get()) {
@@ -174,6 +180,8 @@ public class DownloadDialog {
 
             String fileName = editText.getText().toString().trim();
             String thumbnail = isThumbnailSelected.get() ? details.getThumbnail(): null;
+            // check permissions
+            ((MainActivity)context).requestPermissions();
             ((MainActivity)context).downloadService.initiateDownload(new DownloadTask(
                     url,
                     fileName,

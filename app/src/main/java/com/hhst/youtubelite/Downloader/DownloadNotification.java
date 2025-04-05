@@ -83,7 +83,7 @@ public class DownloadNotification {
     public void updateProgress(int progress, String showing) {
         if (builder != null) {
             builder.setProgress(100, progress, false)
-                    .setSubText(String.format("%s %s", showing,  progress + "%"));
+                    .setSubText(showing);
             notificationManager.notify(notificationId, builder.build());
         }
     }
