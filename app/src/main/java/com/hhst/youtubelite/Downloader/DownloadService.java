@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.google.gson.Gson;
 import com.hhst.youtubelite.R;
 import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
@@ -46,8 +47,8 @@ public class DownloadService extends Service {
 
     private final Handler notificationHandler = new Handler(Looper.getMainLooper());
 
-    public MMKV cache;
-
+    private MMKV cache;
+    private Gson gson;
     public DownloadDetails infoWithCache(String url) throws Exception {
         // get video id from url
         Pattern pattern = Pattern.compile("^https?://.*(?:youtu\\.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$",
@@ -55,11 +56,11 @@ public class DownloadService extends Service {
         Matcher matcher = pattern.matcher(url);
         if (matcher.matches()) {
             String id = matcher.group(1);
-            DownloadDetails details = cache.decodeParcelable(id, DownloadDetails.class);
+            DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
             if (details == null) {
                 details = Downloader.info(id);
                 final int expireTime = 60 * 60 * 24 * 7; // one week expire time
-                cache.encode(id, details, expireTime);
+                cache.encode(id, gson.toJson(details), expireTime);
             }
             return details;
         }
@@ -73,6 +74,7 @@ public class DownloadService extends Service {
         download_executor = Executors.newFixedThreadPool(max_download_tasks);
         MMKV.initialize(this);
         cache = MMKV.defaultMMKV();
+        gson = new Gson();
     }
 
     @Override

@@ -72,6 +72,7 @@ public class DownloadDialog {
             try {
                 // try to get details from cache
                 details = ((MainActivity)context).downloadService.infoWithCache(url);
+                if (details != null) latch.countDown();
                 if (progressBar != null)
                     new Handler(Looper.getMainLooper()).post(() -> progressBar.setVisibility(View.GONE));
                 if (progressBar2 != null && qualityDialog != null)
@@ -80,7 +81,6 @@ public class DownloadDialog {
                         qualityDialog.dismiss();
                         showVideoQualityDialog();
                     });
-                latch.countDown();
             } catch (Throwable e) {
                 // avoid some unnecessary toast
                 if (e instanceof InterruptedException) return;
