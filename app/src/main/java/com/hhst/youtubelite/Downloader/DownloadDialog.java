@@ -70,7 +70,12 @@ public class DownloadDialog {
         latch = new CountDownLatch(1);
         executor.execute(() -> {
             try {
-                details = Downloader.info(url);
+                // try to get details from cache first
+                details = ((MainActivity)context).downloadService.getCache(url);
+                if (details == null) {
+                    details = Downloader.info(url);
+                    ((MainActivity)context).downloadService.setCache(url, details);
+                }
                 if (progressBar != null)
                     new Handler(Looper.getMainLooper()).post(() -> progressBar.setVisibility(View.GONE));
                 if (progressBar2 != null && qualityDialog != null)
@@ -248,6 +253,7 @@ public class DownloadDialog {
                 .setView(dialogView)
                 .create();
 
+        qualityDialog.setOnDismissListener(dialogInterface -> progressBar2 = null);
         LinearLayout quality_selector = dialogView.findViewById(R.id.quality_container);
         Button cancelButton = dialogView.findViewById(R.id.button_cancel);
         Button confirmButton = dialogView.findViewById(R.id.button_confirm);

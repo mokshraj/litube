@@ -13,9 +13,7 @@ constraintlayout = "2.1.4"
 swiperefreshlayout = "1.1.0"
 
 [libraries]
-aria2c = { module = "io.github.junkfood02.youtubedl-android:aria2c", version.ref = "library" }
 ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version.ref = "library" }
-java-youtube-downloader = { module = "com.github.sealedtx:java-youtube-downloader", version.ref = "javaYoutubeDownloader" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

@@ -30,7 +30,8 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <service android:name=".Downloader.DownloadService" android:enabled="true" android:exported="false"/>
+        <service android:name=".Downloader.DownloadService"
+            android:exported="false" />
 
 
         <activity

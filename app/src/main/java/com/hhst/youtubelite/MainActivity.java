@@ -39,8 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -78,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
 
         requestPermissions();
 
-        clearCache();
         startDownloadService();
         initializeDownloader();
     }
@@ -162,28 +159,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return false;
-    }
-
-    // clear cache
-    private void clearCache() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            File cacheDir = getCacheDir();
-            if (cacheDir.exists() && cacheDir.isDirectory()) {
-                File[] files = cacheDir.listFiles(file -> file.isFile() &&
-                        (file.getName().endsWith(".mp4") || file.getName().endsWith(".m4a"))
-                );
-                if (files != null) {
-                    for (File file : files) {
-                        boolean deleted = file.delete();
-                        if (!deleted) {
-                            Log.w("ClearCache", "Failed to delete file: " +
-                                    file.getAbsolutePath());
-                        }
-                    }
-                }
-            }
-        });
     }
 
 
