@@ -70,12 +70,8 @@ public class DownloadDialog {
         latch = new CountDownLatch(1);
         executor.execute(() -> {
             try {
-                // try to get details from cache first
-                details = ((MainActivity)context).downloadService.getCache(url);
-                if (details == null) {
-                    details = Downloader.info(url);
-                    ((MainActivity)context).downloadService.setCache(url, details);
-                }
+                // try to get details from cache
+                details = ((MainActivity)context).downloadService.infoWithCache(url);
                 if (progressBar != null)
                     new Handler(Looper.getMainLooper()).post(() -> progressBar.setVisibility(View.GONE));
                 if (progressBar2 != null && qualityDialog != null)

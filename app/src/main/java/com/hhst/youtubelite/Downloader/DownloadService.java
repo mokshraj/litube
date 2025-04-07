@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import com.hhst.youtubelite.R;
+import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 
@@ -29,12 +30,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DownloadService extends Service {
@@ -45,13 +46,24 @@ public class DownloadService extends Service {
 
     private final Handler notificationHandler = new Handler(Looper.getMainLooper());
 
-    private final Map<String, DownloadDetails> cache = new HashMap<>();
+    public MMKV cache;
 
-    public DownloadDetails getCache(String url) {
-        return cache.get(url);
-    }
-    public void setCache(String url, DownloadDetails details) {
-        cache.put(url, details);
+    public DownloadDetails infoWithCache(String url) throws Exception {
+        // get video id from url
+        Pattern pattern = Pattern.compile("^https?://.*(?:youtu\\.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$",
+                Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(url);
+        if (matcher.matches()) {
+            String id = matcher.group(1);
+            DownloadDetails details = cache.decodeParcelable(id, DownloadDetails.class);
+            if (details == null) {
+                details = Downloader.info(id);
+                final int expireTime = 60 * 60 * 24 * 7; // one week expire time
+                cache.encode(id, details, expireTime);
+            }
+            return details;
+        }
+        throw new RuntimeException("Invalid url");
     }
 
     @Override
@@ -59,6 +71,8 @@ public class DownloadService extends Service {
         super.onCreate();
         download_tasks = new ConcurrentHashMap<>();
         download_executor = Executors.newFixedThreadPool(max_download_tasks);
+        MMKV.initialize(this);
+        cache = MMKV.defaultMMKV();
     }
 
     @Override
@@ -241,6 +255,7 @@ public class DownloadService extends Service {
         });
 
     }
+
     private void moveFile(File source, File destination) throws IOException {
         try (FileInputStream fis = new FileInputStream(source);
              FileChannel inChannel = fis.getChannel();
