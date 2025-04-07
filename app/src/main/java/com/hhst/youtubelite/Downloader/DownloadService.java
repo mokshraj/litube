@@ -15,9 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-import com.google.gson.Gson;
 import com.hhst.youtubelite.R;
-import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 
@@ -31,6 +29,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,8 +46,7 @@ public class DownloadService extends Service {
 
     private final Handler notificationHandler = new Handler(Looper.getMainLooper());
 
-    private MMKV cache;
-    private Gson gson;
+    private final Map<String, DownloadDetails> cache = new HashMap<>();
     public DownloadDetails infoWithCache(String url) throws Exception {
         // get video id from url
         Pattern pattern = Pattern.compile("^https?://.*(?:youtu\\.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$",
@@ -56,11 +54,10 @@ public class DownloadService extends Service {
         Matcher matcher = pattern.matcher(url);
         if (matcher.matches()) {
             String id = matcher.group(1);
-            DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
+            DownloadDetails details = cache.get(id);
             if (details == null) {
                 details = Downloader.info(id);
-                final int expireTime = 60 * 60 * 24 * 7; // one week expire time
-                cache.encode(id, gson.toJson(details), expireTime);
+                cache.put(id, details);
             }
             return details;
         }
@@ -72,9 +69,6 @@ public class DownloadService extends Service {
         super.onCreate();
         download_tasks = new ConcurrentHashMap<>();
         download_executor = Executors.newFixedThreadPool(max_download_tasks);
-        MMKV.initialize(this);
-        cache = MMKV.defaultMMKV();
-        gson = new Gson();
     }
 
     @Override

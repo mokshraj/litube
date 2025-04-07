@@ -56,8 +56,6 @@ dependencies {
     annotationProcessor(libs.lombok)
     implementation(libs.library)
     implementation(libs.ffmpeg)
-    implementation(libs.mmkv)
-    implementation(libs.gson)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
