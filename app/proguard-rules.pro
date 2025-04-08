@@ -47,3 +47,5 @@
 -dontobfuscate
 -keep class com.yausername.** { *; }
 -keep class org.apache.commons.compress.archivers.zip.** { *; }
+
+-keepclassmembers class com.hhst.youtubelite.Downloader.DownloadDetails { *; }

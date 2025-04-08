@@ -59,9 +59,9 @@ public class DownloadService extends Service {
             DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
             // validate cached details
             if (details == null || details.getTitle() == null || details.getAuthor() == null
-            || details.getThumbnail() == null || details.getFormats() == null || details.getFormats().isEmpty()) {
+                    || details.getThumbnail() == null || details.getFormats() == null || details.getFormats().isEmpty()) {
                 details = Downloader.info(id);
-                cache.encode(id, gson.toJson(details));
+                cache.encode(id, gson.toJson(details), 60 * 60 * 24 * 7);
             }
             return details;
         }
