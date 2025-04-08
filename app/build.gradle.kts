@@ -14,7 +14,14 @@ android {
         versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
-            abiFilters.addAll(listOf("x86", "x86_64", "armeabi-v7a", "arm64-v8a"))
+            splits {
+                abi {
+                    isEnable = true
+                    reset()
+                    include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+                    isUniversalApk = true
+                }
+            }
         }
     }
 
@@ -49,6 +56,8 @@ dependencies {
     annotationProcessor(libs.lombok)
     implementation(libs.library)
     implementation(libs.ffmpeg)
+    implementation(libs.mmkv)
+    implementation(libs.gson)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

@@ -46,41 +46,20 @@ public class DownloadDialog {
     private DownloadDetails details;
     private final CountDownLatch latch;
     private View dialogView;
-    private AlertDialog qualityDialog;
 
-    private ProgressBar progressBar;
-    private ProgressBar progressBar2;
 
-    private AtomicReference<VideoFormat> selectedQuality;
-    private AtomicBoolean isVideoSelected;
-    private Button buttonVideo;
 
-    private final int themeColor;
 
     public DownloadDialog(String url, Context context) {
         this.url = url;
         this.context = context;
-        // get theme color
-        TypedValue value = new TypedValue();
-        context.getTheme()
-                .resolveAttribute(com.google.android.material.R.attr.colorPrimary,
-                        value, true);
-        themeColor = value.data;
         executor = Executors.newCachedThreadPool();
         latch = new CountDownLatch(1);
-        executor.execute(() -> {
+        executor.submit(() -> {
             try {
                 // try to get details from cache
                 details = ((MainActivity)context).downloadService.infoWithCache(url);
                 if (details != null) latch.countDown();
-                if (progressBar != null)
-                    new Handler(Looper.getMainLooper()).post(() -> progressBar.setVisibility(View.GONE));
-                if (progressBar2 != null && qualityDialog != null)
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        progressBar2.setVisibility(View.GONE);
-                        qualityDialog.dismiss();
-                        showVideoQualityDialog();
-                    });
             } catch (Throwable e) {
                 // avoid some unnecessary toast
                 if (e instanceof InterruptedException) return;
@@ -94,7 +73,7 @@ public class DownloadDialog {
     public void show() {
 
         dialogView = View.inflate(context, R.layout.download_dialog, null);
-        progressBar = dialogView.findViewById(R.id.loadingBar);
+        ProgressBar progressBar = dialogView.findViewById(R.id.loadingBar);
         if (progressBar != null && details == null) progressBar.setVisibility(View.VISIBLE);
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(context)
@@ -107,63 +86,77 @@ public class DownloadDialog {
 
         ImageView imageView = dialogView.findViewById(R.id.download_image);
         EditText editText = dialogView.findViewById(R.id.download_edit_text);
-        buttonVideo = dialogView.findViewById(R.id.button_video);
-        Button buttonThumbnail = dialogView.findViewById(R.id.button_thumbnail);
-        Button buttonAudio = dialogView.findViewById(R.id.button_audio);
-        Button buttonCancel = dialogView.findViewById(R.id.button_cancel);
-        Button buttonDownload = dialogView.findViewById(R.id.button_download);
+        Button videoButton = dialogView.findViewById(R.id.button_video);
+        Button thumbnailButton = dialogView.findViewById(R.id.button_thumbnail);
+        Button audioButton = dialogView.findViewById(R.id.button_audio);
+        Button cancelButton = dialogView.findViewById(R.id.button_cancel);
+        Button downloadButton = dialogView.findViewById(R.id.button_download);
 
-        // load image
-        loadImage(imageView);
-
-        // load default video name
-        loadVideoName(editText);
+        executor.submit(() -> {
+            try {
+                latch.await();
+                if (progressBar != null && progressBar.getVisibility() == View.VISIBLE)
+                    dialogView.post(() -> progressBar.setVisibility(View.GONE));
+                // load image
+                loadImage(imageView);
+                // load default video name
+                loadVideoName(editText);
+            } catch (InterruptedException ignored) {}
+        });
 
         // state
-        isVideoSelected = new AtomicBoolean(false);
+        AtomicBoolean isVideoSelected = new AtomicBoolean(false);
         AtomicBoolean isThumbnailSelected = new AtomicBoolean(false);
         AtomicBoolean isAudioSelected = new AtomicBoolean(false);
-        selectedQuality = new AtomicReference<>(null);
+        AtomicReference<VideoFormat> selectedQuality = new AtomicReference<>(null);
 
         // set button default background color
-        buttonVideo.setBackgroundColor(context.getColor(android.R.color.darker_gray));
-        buttonThumbnail.setBackgroundColor(context.getColor(android.R.color.darker_gray));
-        buttonAudio.setBackgroundColor(context.getColor(android.R.color.darker_gray));
+        videoButton.setBackgroundColor(context.getColor(android.R.color.darker_gray));
+        thumbnailButton.setBackgroundColor(context.getColor(android.R.color.darker_gray));
+        audioButton.setBackgroundColor(context.getColor(android.R.color.darker_gray));
 
+        // get theme color
+        TypedValue value = new TypedValue();
+        context.getTheme()
+                .resolveAttribute(com.google.android.material.R.attr.colorPrimary,
+                        value, true);
+        final int themeColor = value.data;
 
         // on video button clicked
-        buttonVideo.setOnClickListener(v -> showVideoQualityDialog());
+        videoButton.setOnClickListener(v -> showVideoQualityDialog(
+                selectedQuality, isVideoSelected, videoButton, themeColor
+                ));
 
         // on thumbnail button clicked
-        buttonThumbnail.setOnClickListener(v -> {
+        thumbnailButton.setOnClickListener(v -> {
             if (details == null) {
                 return;
             }
             isThumbnailSelected.set(!isThumbnailSelected.get());
-            buttonThumbnail.setSelected(isThumbnailSelected.get());
+            thumbnailButton.setSelected(isThumbnailSelected.get());
             if (isThumbnailSelected.get()) {
-                buttonThumbnail.setBackgroundColor(themeColor);
+                thumbnailButton.setBackgroundColor(themeColor);
             } else {
-                buttonThumbnail.setBackgroundColor(context.getColor(android.R.color.darker_gray));
+                thumbnailButton.setBackgroundColor(context.getColor(android.R.color.darker_gray));
             }
         });
 
         // on audio-only button clicked
-        buttonAudio.setOnClickListener(v -> {
+        audioButton.setOnClickListener(v -> {
             if (details == null) {
                 return;
             }
             isAudioSelected.set(!isAudioSelected.get());
-            buttonAudio.setSelected(isAudioSelected.get());
+            audioButton.setSelected(isAudioSelected.get());
             if (isAudioSelected.get()) {
-                buttonAudio.setBackgroundColor(themeColor);
+                audioButton.setBackgroundColor(themeColor);
             } else {
-                buttonAudio.setBackgroundColor(context.getColor(android.R.color.darker_gray));
+                audioButton.setBackgroundColor(context.getColor(android.R.color.darker_gray));
             }
         });
 
         // on download button clicked
-        buttonDownload.setOnClickListener(v -> {
+        downloadButton.setOnClickListener(v -> {
             // fixed in live page
             if (details == null) {
                 dialog.dismiss();
@@ -195,15 +188,14 @@ public class DownloadDialog {
         });
 
 
-        buttonCancel.setOnClickListener(v -> dialog.dismiss());
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
 
         // show dialog
         dialog.show();
     }
     private void loadImage(ImageView imageView) {
-        executor.execute(() -> {
+        executor.submit(() -> {
             try {
-                latch.await();
                 URL url = new URL(details.getThumbnail());
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
@@ -215,7 +207,7 @@ public class DownloadDialog {
                 dialogView.post(() -> imageView.setImageBitmap(bitmap));
 
                 connection.disconnect();
-            } catch (IOException | InterruptedException e) {
+            } catch (IOException e) {
                 Log.e("When fetch thumbnail", Log.getStackTraceString(e));
                 dialogView.post(() ->
                         Toast.makeText(context,
@@ -227,29 +219,27 @@ public class DownloadDialog {
     }
 
     private void loadVideoName(EditText editText) {
-        executor.execute(() -> {
-            try {
-                latch.await();
-                String title = details.getTitle();
-                String author = details.getAuthor();
-                String video_default_name = String.format("%s-%s", title, author);
-                dialogView.post(() -> editText.setText(video_default_name));
-            } catch (InterruptedException e) {
-                Log.e("When load video title and author", Log.getStackTraceString(e));
-            }
+        executor.submit(() -> {
+            String title = details.getTitle();
+            String author = details.getAuthor();
+            String video_default_name = String.format("%s-%s", title, author);
+            dialogView.post(() -> editText.setText(video_default_name));
         });
     }
 
-    private void showVideoQualityDialog() {
+    private void showVideoQualityDialog(AtomicReference<VideoFormat> selectedQuality,
+                                        AtomicBoolean isVideoSelected,
+                                        Button videoButton,
+                                        int themeColor
+                                        ) {
         View dialogView = View.inflate(context, R.layout.quality_selector, null);
-        progressBar2 = dialogView.findViewById(R.id.loadingBar2);
-        if (progressBar2 != null && details == null) progressBar2.setVisibility(View.VISIBLE);
-        qualityDialog = new MaterialAlertDialogBuilder(context)
+        ProgressBar progressBar = dialogView.findViewById(R.id.loadingBar2);
+        if (progressBar != null && details == null) progressBar.setVisibility(View.VISIBLE);
+        AlertDialog qualityDialog = new MaterialAlertDialogBuilder(context)
                 .setTitle(context.getString(R.string.video_quality))
                 .setView(dialogView)
                 .create();
 
-        qualityDialog.setOnDismissListener(dialogInterface -> progressBar2 = null);
         LinearLayout quality_selector = dialogView.findViewById(R.id.quality_container);
         Button cancelButton = dialogView.findViewById(R.id.button_cancel);
         Button confirmButton = dialogView.findViewById(R.id.button_confirm);
@@ -264,6 +254,12 @@ public class DownloadDialog {
         executor.execute(() -> {
             try {
                 latch.await();
+                if (progressBar != null && progressBar.getVisibility() == View.VISIBLE) {
+                    dialogView.post(() -> progressBar.setVisibility(View.GONE));
+                    qualityDialog.dismiss();
+                    dialogView.post(() ->
+                            showVideoQualityDialog(selectedQuality, isVideoSelected, videoButton, themeColor));
+                }
                 AtomicLong audioSize = new AtomicLong();
                 details.getFormats().forEach(it -> {
                     String ext = it.getExt();
@@ -316,11 +312,11 @@ public class DownloadDialog {
             if (checked_box.get() == null) {
                 selectedQuality.set(null);
                 isVideoSelected.set(false);
-                buttonVideo.setBackgroundColor(context.getColor(android.R.color.darker_gray));
+                videoButton.setBackgroundColor(context.getColor(android.R.color.darker_gray));
             } else {
                 selectedQuality.set(selected_format.get());
                 isVideoSelected.set(true);
-                buttonVideo.setBackgroundColor(themeColor);
+                videoButton.setBackgroundColor(themeColor);
             }
             qualityDialog.dismiss();
         });

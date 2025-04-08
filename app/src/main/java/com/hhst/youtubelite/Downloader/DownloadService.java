@@ -15,7 +15,9 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.google.gson.Gson;
 import com.hhst.youtubelite.R;
+import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 
@@ -29,7 +31,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,7 +47,8 @@ public class DownloadService extends Service {
 
     private final Handler notificationHandler = new Handler(Looper.getMainLooper());
 
-    private final Map<String, DownloadDetails> cache = new HashMap<>();
+    private MMKV cache;
+    private final Gson gson = new Gson();
     public DownloadDetails infoWithCache(String url) throws Exception {
         // get video id from url
         Pattern pattern = Pattern.compile("^https?://.*(?:youtu\\.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$",
@@ -54,10 +56,12 @@ public class DownloadService extends Service {
         Matcher matcher = pattern.matcher(url);
         if (matcher.matches()) {
             String id = matcher.group(1);
-            DownloadDetails details = cache.get(id);
-            if (details == null) {
+            DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
+            // validate cached details
+            if (details == null || details.getTitle() == null || details.getAuthor() == null
+            || details.getThumbnail() == null || details.getFormats() == null || details.getFormats().isEmpty()) {
                 details = Downloader.info(id);
-                cache.put(id, details);
+                cache.encode(id, gson.toJson(details));
             }
             return details;
         }
@@ -69,6 +73,8 @@ public class DownloadService extends Service {
         super.onCreate();
         download_tasks = new ConcurrentHashMap<>();
         download_executor = Executors.newFixedThreadPool(max_download_tasks);
+        MMKV.initialize(this);
+        cache = MMKV.defaultMMKV();
     }
 
     @Override
