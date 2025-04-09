@@ -43,6 +43,7 @@ public class Downloader {
     ) throws YoutubeDL.CanceledException, InterruptedException, YoutubeDLException {
         YoutubeDLRequest request = new YoutubeDLRequest(video_url);
         request.addOption("--no-mtime");
+        request.addOption("--embed-thumbnail");
         request.addOption("--concurrent-fragments", 8);
         request.addOption("-f","bestaudio[ext=m4a]");
         request.addOption("-o", output.getAbsolutePath() + ".m4a");

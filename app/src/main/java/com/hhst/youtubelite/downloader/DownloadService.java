@@ -2,8 +2,6 @@ package com.hhst.youtubelite.downloader;
 
 import android.app.Service;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaScannerConnection;
 import android.os.Binder;
 import android.os.Environment;
@@ -21,16 +19,11 @@ import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,6 +42,7 @@ public class DownloadService extends Service {
 
     private MMKV cache;
     private final Gson gson = new Gson();
+
     public DownloadDetails infoWithCache(String url) throws Exception {
         // get video id from url
         Pattern pattern = Pattern.compile("^https?://.*(?:youtu\\.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$",
@@ -60,7 +54,7 @@ public class DownloadService extends Service {
             // validate cached details
             if (details == null || details.getTitle() == null || details.getAuthor() == null
                     || details.getThumbnail() == null || details.getFormats() == null || details.getFormats().isEmpty()) {
-                details = Downloader.info(id);
+                details = Downloader.info(url);
                 cache.encode(id, gson.toJson(details), 60 * 60 * 24 * 7);
             }
             return details;
@@ -87,12 +81,18 @@ public class DownloadService extends Service {
             retryDownload(taskId);
         } else if ("DELETE_DOWNLOAD".equals(action)) {
             deleteDownload(taskId);
+        } else if ("DOWNLOAD_THUMBNAIL".equals(action)) {
+            String url = intent.getStringExtra("thumbnail");
+            String filename = sanitizeFileName(intent.getStringExtra("filename"));
+            File outputDir = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name));
+            File outputFile = new File(outputDir, filename + ".jpg");
+            downloadThumbnail(url, outputFile);
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
     public class DownloadBinder extends Binder {
-
         public DownloadService getService() {
             return DownloadService.this;
         }
@@ -110,13 +110,6 @@ public class DownloadService extends Service {
         return INVALID_FILENAME_PATTERN.matcher(fileName).replaceAll("_");
     }
 
-    private InputStream downloadFromURL(URL url) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setDoInput(true);
-        connection.connect();
-        return connection.getInputStream();
-    }
-
     private void showToast(String content) {
         new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(
                 this,
@@ -127,39 +120,19 @@ public class DownloadService extends Service {
 
     private void downloadThumbnail(String thumbnail, File outputFile) {
         if (thumbnail != null) {
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            executor.execute(() -> {
-                InputStream input = null;
-                OutputStream output = null;
+            download_executor.submit(() -> {
                 try {
-                    input = downloadFromURL(new URL(thumbnail));
-                    // convert to bitmap
-                    Bitmap bitmap = BitmapFactory.decodeStream(input);
-
-                    output = Files.newOutputStream(outputFile.toPath());
-                    // output as PNG
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
-                    output.flush();
-
+                    FileUtils.copyURLToFile(new URL(thumbnail), outputFile);
                     // notify to scan
-                    MediaScannerConnection.scanFile(this, new String[]{outputFile.getAbsolutePath()}, null, null);
+                    MediaScannerConnection.scanFile(this,
+                            new String[]{outputFile.getAbsolutePath()}, null, null);
                     showToast(getString(R.string.thumbnail_has_been_saved_to) + outputFile);
-
                 } catch (Exception e) {
-                    Log.e("When download thumbnail", Log.getStackTraceString(e));
-                    showToast(getString(R.string.failed_to_download_thumbnail) + e);
-                } finally {
-                    try {
-                        if (input != null) {
-                            input.close();
-                        }
-                        if (output != null) {
-                            output.close();
-                        }
-                    } catch (IOException e) {
-                        Log.e("Stream close error", Log.getStackTraceString(e));
-                    }
+                    Log.e(getString(R.string.failed_to_download_thumbnail),
+                            Log.getStackTraceString(e));
+                    showToast(getString(R.string.failed_to_download_thumbnail));
                 }
+
             });
         }
     }
@@ -190,19 +163,19 @@ public class DownloadService extends Service {
                             return null;
                         });
             } catch (YoutubeDLException e) {
-                Log.e("download error", Log.getStackTraceString(e));
+                Log.e(getString(R.string.failed_to_download), Log.getStackTraceString(e));
                 showToast(getString(R.string.failed_to_download) + e);
                 task.getNotification().cancelDownload(getString(R.string.failed_to_download));
                 task.setState(DownloaderState.STOPPED);
                 return;
             } catch (YoutubeDL.CanceledException e) {
-                Log.e("download error", Log.getStackTraceString(e));
+                Log.e(getString(R.string.failed_to_download), Log.getStackTraceString(e));
                 showToast(getString(R.string.download_canceled));
                 task.getNotification().cancelDownload(getString(R.string.download_canceled));
                 task.setState(DownloaderState.STOPPED);
                 return;
             } catch (InterruptedException e) {
-                Log.e("download error", Log.getStackTraceString(e));
+                Log.e(getString(R.string.failed_to_download), Log.getStackTraceString(e));
                 task.setState(DownloaderState.STOPPED);
                 return;
             }
@@ -215,12 +188,12 @@ public class DownloadService extends Service {
                 task.setOutput(output);
                 // Move audio file to public directory
                 try {
-                    moveFile(audio, output);
+                    FileUtils.moveFile(audio, output);
                 } catch (IOException e) {
+                    Log.e(getString(R.string.audio_move_error), Log.getStackTraceString(e));
                     notificationHandler.post(()
-                            -> notification.cancelDownload(getString(R.string.audio_copy_error)));
-                    showToast(getString(R.string.audio_copy_error));
-                    Log.e("Error moving audio file", Log.getStackTraceString(e));
+                            -> notification.cancelDownload(getString(R.string.audio_move_error)));
+                    showToast(getString(R.string.audio_move_error));
                     return;
                 }
                 notificationHandler.post(() -> notification.completeDownload(
@@ -233,12 +206,12 @@ public class DownloadService extends Service {
                 task.setOutput(output);
                 // Move video file to public directory
                 try {
-                    moveFile(video, output);
+                    FileUtils.moveFile(video, output);
                 } catch (IOException e) {
+                    Log.e(getString(R.string.video_move_error), Log.getStackTraceString(e));
                     notificationHandler.post(() ->
-                            notification.cancelDownload(getString(R.string.video_copy_error)));
-                    showToast(getString(R.string.video_copy_error));
-                    Log.e("Error moving video file", Log.getStackTraceString(e));
+                            notification.cancelDownload(getString(R.string.video_move_error)));
+                    showToast(getString(R.string.video_move_error));
                     return;
                 }
                 notificationHandler.post(() ->
@@ -257,21 +230,6 @@ public class DownloadService extends Service {
 
     }
 
-    private void moveFile(File source, File destination) throws IOException {
-        try (FileInputStream fis = new FileInputStream(source);
-             FileChannel inChannel = fis.getChannel();
-             FileOutputStream fos = new FileOutputStream(destination);
-             FileChannel outChannel = fos.getChannel()) {
-
-            inChannel.transferTo(0, inChannel.size(), outChannel);
-
-        }
-
-        if (!source.delete()) {
-            Log.w("file delete error", "Failed to delete source file: " + source.getAbsolutePath());
-        }
-    }
-
 
     public void initiateDownload(DownloadTask task) {
         download_executor.submit(() -> {
@@ -287,7 +245,7 @@ public class DownloadService extends Service {
             task.setFileName(sanitizeFileName(task.getFileName()));
 
             // download thumbnail
-            downloadThumbnail(task.getThumbnail(), new File(outputDir, task.getFileName() + ".png"));
+            downloadThumbnail(task.getThumbnail(), new File(outputDir, task.getFileName() + ".jpg"));
 
             // download audio
             if (task.getIsAudio()) {
@@ -338,7 +296,7 @@ public class DownloadService extends Service {
         }
 
         // remove output file
-        removeOutput(task.getOutput());
+        removeFile(task.getOutput());
 
         // Set the running flag to false to stop the task
         // This will halt the progress updates and allow for the next notification handling
@@ -364,7 +322,7 @@ public class DownloadService extends Service {
 
         showToast(getString(R.string.retry_download) + task.getFileName());
         // remove output files
-        removeOutput(task.getOutput());
+        removeFile(task.getOutput());
 
         // Set the running flag to false to stop the task
         // This will halt the progress updates and allow for the next notification handling
@@ -410,18 +368,25 @@ public class DownloadService extends Service {
         }
         if (task.getState() == DownloaderState.FINISHED) {
             // only triggered this under the COMPLETED flag
-            if (task.getOutput().delete()) {
-                // dismiss the notification
-                task.getNotification().clearDownload();
+            try {
+                FileUtils.forceDelete(task.getOutput());
                 // show toast
                 showToast(getString(R.string.file_deleted));
+            } catch (IOException e) {
+                Log.e(getString(R.string.failed_to_delete), Log.getStackTraceString(e));
+                showToast(getString(R.string.failed_to_delete));
+            } finally {
+                // dismiss the notification
+                task.getNotification().clearDownload();
             }
         }
     }
 
-    private void removeOutput(File output) {
-        if (output != null && !output.delete()) {
-            output.deleteOnExit();
+    private void removeFile(File file) {
+        try {
+            FileUtils.forceDelete(file);
+        } catch (IOException e) {
+            Log.e(getString(R.string.failed_to_delete), Log.getStackTraceString(e));
         }
     }
 

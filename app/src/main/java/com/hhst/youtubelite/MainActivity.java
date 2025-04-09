@@ -80,7 +80,8 @@ public class MainActivity extends AppCompatActivity {
         initializeDownloader();
     }
 
-    public final int REQUEST_NOTIFICATION_CODE = 1;
+    private static final int REQUEST_NOTIFICATION_CODE = 100;
+    private static final int REQUEST_STORAGE_CODE = 101;
 
     public void requestPermissions() {
 
@@ -93,13 +94,16 @@ public class MainActivity extends AppCompatActivity {
                         REQUEST_NOTIFICATION_CODE
                 );
             }
-        } else {
+        }
+
+        // check storage permission
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this,
+                ActivityCompat.requestPermissions(
+                        this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        REQUEST_NOTIFICATION_CODE
+                        REQUEST_STORAGE_CODE
                 );
             }
         }

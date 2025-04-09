@@ -1,8 +1,7 @@
 package com.hhst.youtubelite.downloader;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -20,14 +19,12 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.hhst.youtubelite.FullScreenImageActivity;
 import com.hhst.youtubelite.MainActivity;
 import com.hhst.youtubelite.R;
+import com.squareup.picasso.Picasso;
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -48,8 +45,6 @@ public class DownloadDialog {
     private View dialogView;
 
 
-
-
     public DownloadDialog(String url, Context context) {
         this.url = url;
         this.context = context;
@@ -58,13 +53,14 @@ public class DownloadDialog {
         executor.submit(() -> {
             try {
                 // try to get details from cache
-                details = ((MainActivity)context).downloadService.infoWithCache(url);
+                details = ((MainActivity) context).downloadService.infoWithCache(url);
                 if (details != null) latch.countDown();
             } catch (Throwable e) {
                 // avoid some unnecessary toast
                 if (e instanceof InterruptedException) return;
-                Log.e("failed to load video detail", Log.getStackTraceString(e));
-                new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(context, context.getString(R.string.failed_to_load_video_details) + Log.getStackTraceString(e), Toast.LENGTH_SHORT).show());
+                Log.e(context.getString(R.string.failed_to_load_video_details), Log.getStackTraceString(e));
+                new Handler(Looper.getMainLooper()).post(() ->
+                        Toast.makeText(context, context.getString(R.string.failed_to_load_video_details), Toast.LENGTH_SHORT).show());
 
             }
         });
@@ -101,7 +97,8 @@ public class DownloadDialog {
                 loadImage(imageView);
                 // load default video name
                 loadVideoName(editText);
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException ignored) {
+            }
         });
 
         // state
@@ -125,7 +122,7 @@ public class DownloadDialog {
         // on video button clicked
         videoButton.setOnClickListener(v -> showVideoQualityDialog(
                 selectedQuality, isVideoSelected, videoButton, themeColor
-                ));
+        ));
 
         // on thumbnail button clicked
         thumbnailButton.setOnClickListener(v -> {
@@ -173,10 +170,10 @@ public class DownloadDialog {
             }
 
             String fileName = editText.getText().toString().trim();
-            String thumbnail = isThumbnailSelected.get() ? details.getThumbnail(): null;
+            String thumbnail = isThumbnailSelected.get() ? details.getThumbnail() : null;
             // check permissions
-            ((MainActivity)context).requestPermissions();
-            ((MainActivity)context).downloadService.initiateDownload(new DownloadTask(
+            ((MainActivity) context).requestPermissions();
+            ((MainActivity) context).downloadService.initiateDownload(new DownloadTask(
                     url,
                     fileName,
                     thumbnail,
@@ -196,29 +193,29 @@ public class DownloadDialog {
         // show dialog
         dialog.show();
     }
+
     private void loadImage(ImageView imageView) {
-        executor.submit(() -> {
-            try {
-                URL url = new URL(details.getThumbnail());
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setDoInput(true);
-                connection.connect();
-                InputStream input = connection.getInputStream();
-
-                Bitmap bitmap = BitmapFactory.decodeStream(input);
-
-                dialogView.post(() -> imageView.setImageBitmap(bitmap));
-
-                connection.disconnect();
-            } catch (IOException e) {
-                Log.e("When fetch thumbnail", Log.getStackTraceString(e));
-                dialogView.post(() ->
-                        Toast.makeText(context,
-                                context.getString(R.string.failed_to_load_image) + e,
-                                Toast.LENGTH_SHORT).show()
-                );
-            }
-        });
+        try {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                // use picasso to load and cache thumbnail
+                Picasso.get().load(details.getThumbnail()).into(imageView);
+                // on image clicked
+                imageView.setOnClickListener(view -> {
+                    Intent intent = new Intent(context, FullScreenImageActivity.class);
+                    intent.putExtra("thumbnail", details.getThumbnail());
+                    intent.putExtra("filename",
+                            String.format("%s-%s", details.getTitle(), details.getAuthor()).trim());
+                    context.startActivity(intent);
+                });
+            });
+        } catch (Exception e) {
+            Log.e(context.getString(R.string.failed_to_load_image), Log.getStackTraceString(e));
+            dialogView.post(() ->
+                    Toast.makeText(context,
+                            context.getString(R.string.failed_to_load_image),
+                            Toast.LENGTH_SHORT).show()
+            );
+        }
     }
 
     private void loadVideoName(EditText editText) {
@@ -234,7 +231,7 @@ public class DownloadDialog {
                                         AtomicBoolean isVideoSelected,
                                         Button videoButton,
                                         int themeColor
-                                        ) {
+    ) {
         View dialogView = View.inflate(context, R.layout.quality_selector, null);
         ProgressBar progressBar = dialogView.findViewById(R.id.loadingBar2);
         if (progressBar != null && details == null) progressBar.setVisibility(View.VISIBLE);
@@ -254,7 +251,7 @@ public class DownloadDialog {
         AtomicReference<CheckBox> checked_box = new AtomicReference<>();
         AtomicReference<VideoFormat> selected_format = new AtomicReference<>();
         // avoid trigger radioGroup.setOnCheckedChangeListener when initiate the radio button check state
-        executor.execute(() -> {
+        executor.submit(() -> {
             try {
                 latch.await();
                 if (progressBar != null && progressBar.getVisibility() == View.VISIBLE) {

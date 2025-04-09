@@ -25,10 +25,12 @@ import android.widget.Toast;
 import com.hhst.youtubelite.MainActivity;
 import com.hhst.youtubelite.R;
 
-import java.io.ByteArrayOutputStream;
+import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -259,14 +261,7 @@ public class YoutubeWebview extends WebView {
 
     private String readInputStream(InputStream inputStream) {
         try {
-            byte[] buffer = new byte[1024];
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byteArrayOutputStream.write(buffer, 0, bytesRead);
-            }
-            inputStream.close();
-            return byteArrayOutputStream.toString();
+            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
         } catch (IOException e) {
             Log.e("InputStreamError", "Error reading input stream", e);
             return null;
