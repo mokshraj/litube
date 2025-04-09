@@ -7,12 +7,8 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.hhst.youtubelite.MainActivity;
-import com.hhst.youtubelite.Downloader.DownloadDialog;
+import com.hhst.youtubelite.downloader.DownloadDialog;
 
-/**
- * Build a JavaScript interface primarily for controlling web tabs in JavaScript.
- *
- */
 public class JavascriptInterface {
     private final Context context;
 

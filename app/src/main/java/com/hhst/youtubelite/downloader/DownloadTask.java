@@ -1,4 +1,4 @@
-package com.hhst.youtubelite.Downloader;
+package com.hhst.youtubelite.downloader;
 
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 
@@ -21,12 +21,4 @@ public class DownloadTask {
     private File output;
     private DownloadNotification notification;
 
-    public DownloadTask(String url, String fileName, String thumbnail, VideoFormat videoFormat, Boolean isAudio, DownloaderState state) {
-        this.url = url;
-        this.fileName = fileName;
-        this.thumbnail = thumbnail;
-        this.videoFormat = videoFormat;
-        this.isAudio = isAudio;
-        this.state = state;
-    }
 }

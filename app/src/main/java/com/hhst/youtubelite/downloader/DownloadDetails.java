@@ -1,4 +1,4 @@
-package com.hhst.youtubelite.Downloader;
+package com.hhst.youtubelite.downloader;
 
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 

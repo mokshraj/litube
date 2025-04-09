@@ -26,8 +26,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 
-import com.hhst.youtubelite.Downloader.DownloadService;
-import com.hhst.youtubelite.webview.YWebview;
+import com.hhst.youtubelite.downloader.DownloadService;
+import com.hhst.youtubelite.webview.YoutubeWebview;
 import com.yausername.ffmpeg.FFmpeg;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
@@ -42,7 +42,7 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
-    public YWebview webview;
+    public YoutubeWebview webview;
     public SwipeRefreshLayout swipeRefreshLayout;
     public ProgressBar progressBar;
 

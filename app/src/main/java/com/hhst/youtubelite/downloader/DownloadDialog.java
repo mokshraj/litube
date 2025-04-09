@@ -1,4 +1,4 @@
-package com.hhst.youtubelite.Downloader;
+package com.hhst.youtubelite.downloader;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -182,7 +182,10 @@ public class DownloadDialog {
                     thumbnail,
                     selectedQuality.get(),
                     isAudioSelected.get(),
-                    DownloaderState.RUNNING
+                    DownloaderState.RUNNING,
+                    null,
+                    null,
+                    null
             ));
             dialog.dismiss();
         });

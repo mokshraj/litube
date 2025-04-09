@@ -34,7 +34,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
-public class YWebview extends WebView {
+public class YoutubeWebview extends WebView {
 
     public ArrayList<String> js_res = new ArrayList<>();
 
@@ -51,15 +51,15 @@ public class YWebview extends WebView {
     );
 
 
-    public YWebview(Context context) {
+    public YoutubeWebview(Context context) {
         super(context);
     }
 
-    public YWebview(Context context, AttributeSet attrs) {
+    public YoutubeWebview(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public YWebview(Context context, AttributeSet attrs, int defStyleAttr) {
+    public YoutubeWebview(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 

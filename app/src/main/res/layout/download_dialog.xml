@@ -42,14 +42,12 @@
 
 
             <HorizontalScrollView
-                android:id="@+id/button_group_scroll"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
                 android:scrollbars="none">
 
                 <LinearLayout
-                    android:id="@+id/button_group"
                     style="?android:attr/buttonBarStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

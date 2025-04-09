@@ -1,4 +1,4 @@
-package com.hhst.youtubelite.Downloader;
+package com.hhst.youtubelite.downloader;
 
 import android.app.Service;
 import android.content.Intent;
@@ -165,7 +165,6 @@ public class DownloadService extends Service {
     }
 
     private void executeDownload(DownloadTask task) {
-        // Generate common properties
         String fileName = task.getIsAudio() ? String.format("(audio only) %s", task.getFileName())
                 : task.getFileName();
         int taskId = download_tasks.size();
