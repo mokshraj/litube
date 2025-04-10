@@ -46,9 +46,8 @@ public class FullScreenImageActivity extends AppCompatActivity {
                                     ((dialog, which) -> onContextMenuClicked(which)))
                             .create();
                     Window window = menu.getWindow();
-                    if (window != null) {
-                        window.setLayout(800, WindowManager.LayoutParams.WRAP_CONTENT);
-                    }
+                    if (window != null)
+                        window.setLayout(600, WindowManager.LayoutParams.WRAP_CONTENT);
                     menu.show();
                     return true;
                 }

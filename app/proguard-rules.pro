@@ -49,3 +49,9 @@
 -keep class org.apache.commons.compress.archivers.zip.** { *; }
 
 -keepclassmembers class com.hhst.youtubelite.downloader.DownloadDetails { *; }
+
+-dontwarn okio.**
+-dontwarn okhttp3.**
+-dontwarn com.squareup.okhttp3.**
+-keep class com.squareup.okhttp3.** { *; }
+-keep interface com.squareup.okhttp3.** { *; }
