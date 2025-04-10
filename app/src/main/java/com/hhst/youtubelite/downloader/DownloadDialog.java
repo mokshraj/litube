@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 public class DownloadDialog {
     private final Context context;
@@ -169,7 +170,7 @@ public class DownloadDialog {
                 return;
             }
 
-            String fileName = editText.getText().toString().trim();
+            String fileName = sanitizeFileName(editText.getText().toString().trim());
             String thumbnail = isThumbnailSelected.get() ? details.getThumbnail() : null;
             // check permissions
             ((MainActivity) context).requestPermissions();
@@ -203,8 +204,8 @@ public class DownloadDialog {
                 imageView.setOnClickListener(view -> {
                     Intent intent = new Intent(context, FullScreenImageActivity.class);
                     intent.putExtra("thumbnail", details.getThumbnail());
-                    intent.putExtra("filename",
-                            String.format("%s-%s", details.getTitle(), details.getAuthor()).trim());
+                    intent.putExtra("filename", sanitizeFileName(
+                            String.format("%s-%s", details.getTitle(), details.getAuthor()).trim()));
                     context.startActivity(intent);
                 });
             });
@@ -324,6 +325,10 @@ public class DownloadDialog {
         qualityDialog.show();
     }
 
+    private String sanitizeFileName(String fileName) {
+        Pattern INVALID_FILENAME_PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
+        return INVALID_FILENAME_PATTERN.matcher(fileName).replaceAll("_");
+    }
     public static String formatSize(long length) {
         if (length < 0) {
             return "Invalid size";

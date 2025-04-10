@@ -1,9 +1,12 @@
 package com.hhst.youtubelite.downloader;
 
 
+import android.util.Log;
+
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 import com.yausername.youtubedl_android.YoutubeDLRequest;
+import com.yausername.youtubedl_android.YoutubeDLResponse;
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
@@ -17,13 +20,22 @@ import kotlin.jvm.functions.Function3;
  */
 public class Downloader {
 
+    private static String cookie;
+
+    public static void setCookie(String cookie){
+        Downloader.cookie = cookie;
+    }
     /**
      *
      * @param video_url not the video id but the whole url
      * @return DownloadDetails contains everything we need
      */
-    public static DownloadDetails info(String video_url) throws YoutubeDL.CanceledException, YoutubeDLException, InterruptedException {
-        VideoInfo info = YoutubeDL.getInstance().getInfo(video_url);
+    public static DownloadDetails info(String video_url)
+            throws YoutubeDL.CanceledException, YoutubeDLException, InterruptedException {
+        YoutubeDLRequest request = new YoutubeDLRequest(video_url);
+        if (cookie != null)
+            request.addOption("--add-header", String.format("Cookie:\"%s\"", cookie));
+        VideoInfo info = YoutubeDL.getInstance().getInfo(request);
         DownloadDetails details = new DownloadDetails();
         details.setId(info.getId());
         details.setTitle(info.getTitle());
@@ -42,6 +54,8 @@ public class Downloader {
             Function3<Float, Long, String, Unit> callback
     ) throws YoutubeDL.CanceledException, InterruptedException, YoutubeDLException {
         YoutubeDLRequest request = new YoutubeDLRequest(video_url);
+        if (cookie != null)
+            request.addOption("--add-header", String.format("Cookie:\"%s\"", cookie));
         request.addOption("--no-mtime");
         request.addOption("--embed-thumbnail");
         request.addOption("--concurrent-fragments", 8);
@@ -51,7 +65,8 @@ public class Downloader {
             request.addOption("-f", String.format("%s+bestaudio[ext=m4a]", video_format.getFormatId()));
             request.addOption("-o", output.getAbsolutePath());
         }
-        YoutubeDL.getInstance().execute(request, processId, callback);
+        YoutubeDLResponse response = YoutubeDL.getInstance().execute(request, processId, callback);
+        Log.d("yt-dlp download command", response.getCommand().toString());
     }
 
     public static boolean cancel(String processId) {

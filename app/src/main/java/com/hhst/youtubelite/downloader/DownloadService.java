@@ -83,7 +83,7 @@ public class DownloadService extends Service {
             deleteDownload(taskId);
         } else if ("DOWNLOAD_THUMBNAIL".equals(action)) {
             String url = intent.getStringExtra("thumbnail");
-            String filename = sanitizeFileName(intent.getStringExtra("filename"));
+            String filename = intent.getStringExtra("filename");
             File outputDir = new File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOWNLOADS), getString(R.string.app_name));
             File outputFile = new File(outputDir, filename + ".jpg");
@@ -103,11 +103,6 @@ public class DownloadService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return new DownloadBinder();
-    }
-
-    private String sanitizeFileName(String fileName) {
-        Pattern INVALID_FILENAME_PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
-        return INVALID_FILENAME_PATTERN.matcher(fileName).replaceAll("_");
     }
 
     private void showToast(String content) {
@@ -240,9 +235,6 @@ public class DownloadService extends Service {
             if (!outputDir.exists() && !outputDir.mkdir()) {
                 return;
             }
-
-            // replace illegal character in filename
-            task.setFileName(sanitizeFileName(task.getFileName()));
 
             // download thumbnail
             downloadThumbnail(task.getThumbnail(), new File(outputDir, task.getFileName() + ".jpg"));

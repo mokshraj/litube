@@ -24,7 +24,7 @@ import android.widget.Toast;
 
 import com.hhst.youtubelite.MainActivity;
 import com.hhst.youtubelite.R;
-
+import com.hhst.youtubelite.downloader.Downloader;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import java.util.Objects;
 
 public class YoutubeWebview extends WebView {
 
-    public ArrayList<String> js_res = new ArrayList<>();
+    private final ArrayList<String> js_res = new ArrayList<>();
 
     public View fullscreen = null;
 
@@ -147,10 +147,14 @@ public class YoutubeWebview extends WebView {
                         "window.dispatchEvent(new Event('onPageFinished'));",
                         null
                 );
+                // load javascript
                 for (String js : js_res) {
                     evaluateJavascript(js, null);
                 }
 
+                // save cookie
+                String cookie = CookieManager.getInstance().getCookie(url);
+                Downloader.setCookie(cookie);
             }
 
         });
