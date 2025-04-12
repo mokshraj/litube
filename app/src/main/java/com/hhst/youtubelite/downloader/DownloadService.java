@@ -159,7 +159,7 @@ public class DownloadService extends Service {
                         });
             } catch (YoutubeDLException e) {
                 Log.e(getString(R.string.failed_to_download), Log.getStackTraceString(e));
-                showToast(getString(R.string.failed_to_download) + e);
+                showToast(getString(R.string.failed_to_download));
                 task.getNotification().cancelDownload(getString(R.string.failed_to_download));
                 task.setState(DownloaderState.STOPPED);
                 return;
@@ -288,7 +288,7 @@ public class DownloadService extends Service {
         }
 
         // remove output file
-        removeFile(task.getOutput());
+        FileUtils.deleteQuietly(task.getOutput());
 
         // Set the running flag to false to stop the task
         // This will halt the progress updates and allow for the next notification handling
@@ -314,7 +314,7 @@ public class DownloadService extends Service {
 
         showToast(getString(R.string.retry_download) + task.getFileName());
         // remove output files
-        removeFile(task.getOutput());
+        FileUtils.deleteQuietly(task.getOutput());
 
         // Set the running flag to false to stop the task
         // This will halt the progress updates and allow for the next notification handling
@@ -364,21 +364,13 @@ public class DownloadService extends Service {
                 FileUtils.forceDelete(task.getOutput());
                 // show toast
                 showToast(getString(R.string.file_deleted));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.e(getString(R.string.failed_to_delete), Log.getStackTraceString(e));
                 showToast(getString(R.string.failed_to_delete));
             } finally {
                 // dismiss the notification
                 task.getNotification().clearDownload();
             }
-        }
-    }
-
-    private void removeFile(File file) {
-        try {
-            FileUtils.forceDelete(file);
-        } catch (IOException e) {
-            Log.e(getString(R.string.failed_to_delete), Log.getStackTraceString(e));
         }
     }
 

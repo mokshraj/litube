@@ -21,12 +21,20 @@ android {
                     include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
                     isUniversalApk = true
                 }
-            }
         }
     }
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+
+        debug {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -70,4 +78,4 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(kotlin("script-runtime"))
-}
+}}

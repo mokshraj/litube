@@ -20,11 +20,6 @@ import kotlin.jvm.functions.Function3;
  */
 public class Downloader {
 
-    private static String cookie;
-
-    public static void setCookie(String cookie){
-        Downloader.cookie = cookie;
-    }
     /**
      *
      * @param video_url not the video id but the whole url
@@ -33,8 +28,6 @@ public class Downloader {
     public static DownloadDetails info(String video_url)
             throws YoutubeDL.CanceledException, YoutubeDLException, InterruptedException {
         YoutubeDLRequest request = new YoutubeDLRequest(video_url);
-        if (cookie != null)
-            request.addOption("--add-header", String.format("Cookie:\"%s\"", cookie));
         VideoInfo info = YoutubeDL.getInstance().getInfo(request);
         DownloadDetails details = new DownloadDetails();
         details.setId(info.getId());
@@ -54,8 +47,6 @@ public class Downloader {
             Function3<Float, Long, String, Unit> callback
     ) throws YoutubeDL.CanceledException, InterruptedException, YoutubeDLException {
         YoutubeDLRequest request = new YoutubeDLRequest(video_url);
-        if (cookie != null)
-            request.addOption("--add-header", String.format("Cookie:\"%s\"", cookie));
         request.addOption("--no-mtime");
         request.addOption("--embed-thumbnail");
         request.addOption("--concurrent-fragments", 8);

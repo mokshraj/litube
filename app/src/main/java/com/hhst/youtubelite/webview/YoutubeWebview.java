@@ -24,7 +24,6 @@ import android.widget.Toast;
 
 import com.hhst.youtubelite.MainActivity;
 import com.hhst.youtubelite.R;
-import com.hhst.youtubelite.downloader.Downloader;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -151,10 +150,6 @@ public class YoutubeWebview extends WebView {
                 for (String js : js_res) {
                     evaluateJavascript(js, null);
                 }
-
-                // save cookie
-                String cookie = CookieManager.getInstance().getCookie(url);
-                Downloader.setCookie(cookie);
             }
 
         });

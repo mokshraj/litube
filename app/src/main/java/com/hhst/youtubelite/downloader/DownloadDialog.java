@@ -327,7 +327,9 @@ public class DownloadDialog {
 
     private String sanitizeFileName(String fileName) {
         Pattern INVALID_FILENAME_PATTERN = Pattern.compile("[\\\\/:*?\"<>|]");
-        return INVALID_FILENAME_PATTERN.matcher(fileName).replaceAll("_");
+        String cleanFilename = INVALID_FILENAME_PATTERN.matcher(fileName).replaceAll("_");
+        // avoid too long filename
+        return cleanFilename.length() > 60 ? cleanFilename.substring(0, 60) + "...": cleanFilename;
     }
     public static String formatSize(long length) {
         if (length < 0) {
