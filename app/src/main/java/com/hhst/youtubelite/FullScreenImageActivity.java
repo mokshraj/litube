@@ -121,8 +121,8 @@ public class FullScreenImageActivity extends AppCompatActivity {
                         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_thumbnail)));
                     } catch (IOException e) {
                         Log.e(getString(R.string.failed_to_download_thumbnail), Log.getStackTraceString(e));
-                        Toast.makeText(this, getString(R.string.failed_to_download_thumbnail),
-                                Toast.LENGTH_SHORT).show();
+                        runOnUiThread(() -> Toast.makeText(this, getString(R.string.failed_to_download_thumbnail),
+                                Toast.LENGTH_SHORT).show());
                     }
                 });
 

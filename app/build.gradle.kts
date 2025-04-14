@@ -58,8 +58,13 @@ android {
     }
 
 }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 
-dependencies {
+    dependencies {
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     implementation(libs.library)
