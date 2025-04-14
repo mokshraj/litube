@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,14 +71,18 @@ public class MainActivity extends AppCompatActivity {
         );
         swipeRefreshLayout.setProgressViewOffset(true, 80,180);
 
-        loadScript();
-        webview.build();
-        webview.loadUrl(getString(R.string.base_url));
+        Executors.newSingleThreadExecutor().execute(() -> {
+            loadScript();
+            runOnUiThread(() -> {
+                webview.build();
+                webview.loadUrl(getString(R.string.base_url));
+            });
+        });
 
         requestPermissions();
-
         startDownloadService();
         initializeDownloader();
+
     }
 
     private static final int REQUEST_NOTIFICATION_CODE = 100;
@@ -186,8 +191,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeDownloader() {
-
-        new Thread(() -> {
+        Executors.newSingleThreadExecutor().execute(() -> {
             // Initialize the downloader
             try {
                 YoutubeDL.getInstance().init(this);
@@ -203,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("unable to update yt-dlp", Log.getStackTraceString(e));
             }
 
-        }).start();
+        });
     }
 
     @Override

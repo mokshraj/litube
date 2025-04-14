@@ -201,13 +201,13 @@ public class DownloadDialog {
                 // use picasso to load and cache thumbnail
                 Picasso.get().load(details.getThumbnail()).into(imageView);
                 // on image clicked
-                imageView.setOnClickListener(view -> {
+                imageView.setOnClickListener(view -> executor.submit(() -> {
                     Intent intent = new Intent(context, FullScreenImageActivity.class);
                     intent.putExtra("thumbnail", details.getThumbnail());
                     intent.putExtra("filename", sanitizeFileName(
                             String.format("%s-%s", details.getTitle(), details.getAuthor()).trim()));
                     context.startActivity(intent);
-                });
+                }));
             });
         } catch (Exception e) {
             Log.e(context.getString(R.string.failed_to_load_image), Log.getStackTraceString(e));

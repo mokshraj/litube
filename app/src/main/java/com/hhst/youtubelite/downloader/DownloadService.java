@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -383,8 +382,8 @@ public class DownloadService extends Service {
     @Override
     public void onDestroy() {
         // clear all notifications
-        if (!download_tasks.isEmpty()) {
-            Objects.requireNonNull(download_tasks.get(0)).getNotification().clearAll();
+        for (DownloadTask task : download_tasks.values()) {
+            task.getNotification().clearAll();
         }
 
         // cancel all task

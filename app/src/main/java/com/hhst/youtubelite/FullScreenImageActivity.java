@@ -1,9 +1,8 @@
 package com.hhst.youtubelite;
 
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,7 +20,6 @@ import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.hhst.youtubelite.downloader.DownloadService;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import org.apache.commons.io.FileUtils;
 
@@ -35,7 +33,7 @@ public class FullScreenImageActivity extends AppCompatActivity {
 
     private String url;
     private String filename;
-    private File file;
+    private volatile File file;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,26 +64,8 @@ public class FullScreenImageActivity extends AppCompatActivity {
         url = getIntent().getStringExtra("thumbnail");
         filename = getIntent().getStringExtra("filename");
         try {
-            // set screen orientation and image in image_view
-            Picasso.get().load(url).into(new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    if (bitmap.getWidth() > bitmap.getHeight())
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                    else setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-                    photoView.setImageBitmap(bitmap);
-                }
-
-                @Override
-                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                    throw new RuntimeException(e);
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                }
-            });
+            // load image
+            Picasso.get().load(url).into(photoView);
         } catch (Exception e) {
             Log.e(getString(R.string.failed_to_load_image), Log.getStackTraceString(e));
             Toast.makeText(this, getString(R.string.failed_to_load_image), Toast.LENGTH_SHORT)
@@ -109,7 +89,7 @@ public class FullScreenImageActivity extends AppCompatActivity {
                 Executors.newSingleThreadExecutor().execute(() -> {
                     try {
                         // download thumbnail
-                        FileUtils.copyURLToFile(new URL(url), file);
+                        if (!file.exists()) FileUtils.copyURLToFile(new URL(url), file);
                         this.file = file;
                         // build uri
                         Uri uri = FileProvider.getUriForFile(
@@ -132,9 +112,10 @@ public class FullScreenImageActivity extends AppCompatActivity {
 
     @Override
     public void finish() {
-        // clean cached image
-        FileUtils.deleteQuietly(file);
         super.finish();
+        // clean cached image
+        if (file != null) Executors.newSingleThreadExecutor().execute(
+                () -> FileUtils.deleteQuietly(file));
     }
 
 }
