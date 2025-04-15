@@ -27,6 +27,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 
 import com.hhst.youtubelite.downloader.DownloadService;
+import com.hhst.youtubelite.extension.ExtensionManager;
 import com.hhst.youtubelite.webview.YoutubeWebview;
 import com.yausername.ffmpeg.FFmpeg;
 import com.yausername.youtubedl_android.YoutubeDL;
@@ -120,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
         List<String> res_pths = Arrays.asList("css", "js");
         try{
             for (String dir_path : res_pths) {
-                ArrayList<String> resources = new ArrayList<>(
+                List<String> resources = new ArrayList<>(
                         Arrays.asList(Objects.requireNonNull(assetManager.list(dir_path)))
                 );
                 String init_res = resources.contains("init.js") ? "init.js" :
@@ -130,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
                             assetManager.open(dir_path + File.separator + init_res));
                     resources.remove(init_res);
                 }
+                resources = ExtensionManager.filter(this, resources);
                 for (String res : resources) {
                     InputStream stream = assetManager.open(dir_path + File.separator
                             + res);

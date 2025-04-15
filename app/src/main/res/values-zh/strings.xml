@@ -30,4 +30,13 @@
     <string name="downloader_initialize_error">初始化下载器失败</string>
     <string name="failed_to_delete">删除文件失败</string>
     <string name="close">关闭</string>
+    <string name="save">保存</string>
+    <string name="share">分享</string>
+    <string name="share_thumbnail">分享封面</string>
+    <string name="application_not_found">应用未找到</string>
+    <string name="extension">插件</string>
+    <string name="request_restart">设置需重启生效</string>
+    <string name="restart">重启</string>
+    <string name="display_dislikes">展示点踩数</string>
+    <string name="hide_shorts">隐藏短视频</string>
 </resources>

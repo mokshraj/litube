@@ -5,38 +5,28 @@ if (!window.injected){
     // Utils
     values = (key) => {
         const languages = {
-            'zh': { 'loop': '循环播放', 'download': '下载', 'ok': '确定', 'video': '视频', 'cover': '封面' },
-            'en': { 'loop': 'Loop Play', 'download': 'Download', 'ok': 'OK', 'video': 'Video', 'cover': 'Cover' },
-            'ja': { 'loop': 'ループ再生', 'download': 'ダウンロード', 'ok': 'はい', 'video': 'ビデオ', 'cover': 'カバー' },
-            'ko': { 'loop': '반복 재생', 'download': '시모타코', 'ok': '확인', 'video': '비디오', 'cover': '커버' },
-            'fr': { 'loop': 'Lecture en boucle', 'download': 'Télécharger', 'ok': "D'accord", 'video': 'vidéo', 'cover': 'couverture' },
+            'zh': { 'loop': '循环播放', 'download': '下载', 'ok': '确定', 'video': '视频', 'cover': '封面', 'extension': '插件' },
+            'en': { 'loop': 'Loop Play', 'download': 'Download', 'ok': 'OK', 'video': 'Video', 'cover': 'Cover', 'extension': 'Extension' },
+            'ja': { 'loop': 'ループ再生', 'download': 'ダウンロード', 'ok': 'はい', 'video': 'ビデオ', 'cover': 'カバー', 'extension': 'プラグイン' },
+            'ko': { 'loop': '반복 재생', 'download': '시모타코', 'ok': '확인', 'video': '비디오', 'cover': '커버', 'extension': '플러그인' },
+            'fr': { 'loop': 'Lecture en boucle', 'download': 'Télécharger', 'ok': "D'accord", 'video': 'vidéo', 'cover': 'couverture', 'extension': 'extension' },
             }
-            
+
         const lang = (document.body.lang || 'en').substring(0, 2).toLowerCase()
         return languages[lang] ? languages[lang][key] : languages['en'][key]
     }
 
     get_page_class = (url) => {
-        url = url.toLowerCase()
-        if (url.startsWith('https://m.youtube.com')) {
-            if (url.includes('shorts')) {
-                return 'shorts'
-            }
-            if (url.includes('watch')) {
-                return 'watch'
-            }
-            if (url.includes('library')) {
-                return 'library'
-            }
-            if (url.includes('subscriptions')) {
-                return 'subscriptions'
-            }
-            if (url.includes('@')) {
-                return '@'
-            }
-            return 'home'
-        }
-        return 'unknown'
+        url = url.toLowerCase();
+        if (url.startsWith('https://m.youtube.com/shorts')) return 'shorts';
+        if (url.startsWith('https://m.youtube.com/watch')) return 'watch';
+        if (url.startsWith('https://m.youtube.com/feed/subscriptions')) return 'subscriptions';
+        if (url.startsWith('https://m.youtube.com/feed/library')) return 'library';
+        if (url.startsWith('https://m.youtube.com/channel')) return 'channel';
+        if (url.startsWith('https://m.youtube.com/@')) return '@';
+        if (url.startsWith('https://m.youtube.com/select_site')) return 'select_site';
+        if (url.startsWith('https://m.youtube.com')) return 'home';
+        else return 'unknown';
     }
 
 
@@ -70,7 +60,7 @@ if (!window.injected){
             window.dispatchEvent(new Event('onVideoIdChange'))
         }
     }
-    
+
     window.addEventListener('onProgressChangeFinish', observe_video_id)
 
     observe_shorts_id = () => {
@@ -91,77 +81,20 @@ if (!window.injected){
             if (document.querySelector(selector)) {
                 return resolve(document.querySelector(selector))
             }
-    
+
             const observer = new MutationObserver( () => {
                 if (document.querySelector(selector)) {
                     observer.disconnect()
                     resolve(document.querySelector(selector))
                 }
             })
-    
+
             observer.observe(document.body, {
                 childList: true,
                 subtree: true
             })
         })
     }
-
-    /*
-    // format number, eg: 1111 => 1.1K
-    formatNumber = (num) => {
-        const units = ['K', 'M', 'B', 'T']
-        let i = -1
-        while (num >= 1000 && i < units.length - 1) {
-          num /= 1000
-          i++
-        }
-        if (i === -1) {
-            return num
-        }
-        return num.toFixed(1) + units[i]
-      }
-    // return dislike counts
-    add_dislike_counts = () => {
-        const pageClass = get_page_class(location.href)
-        if (pageClass === 'watch') {
-            fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${get_video_id(location.href)}`)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok')
-                }
-                return response.json()
-            }).then((json) => {
-            let dislike = json.dislikes
-            waitElem('dislike-button-view-model').then((dislikeView) => {
-                let dislikeText = document.createElement('div')
-                dislikeText.classList.add('yt-spec-button-shape-next__button-text-content')
-                dislikeText.innerText = formatNumber(dislike)
-                dislikeText.style.marginLeft = '6px'
-                dislikeView.querySelector('yt-touch-feedback-shape').appendChild(dislikeText)
-                dislikeView.querySelector('button').style.width = 'auto'
-        })
-        })}
-        if (pageClass === 'shorts') {
-            fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${get_shorts_id(location.href)}`)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok')
-                }
-                return response.json()
-            }).then((json) => {
-                let dislike = json.dislikes
-                waitElem('button[aria-label="Dislike this video"]').then((dislikeView) => {
-                    dislikeView.parentElement.querySelector('span[role="text"]').innerText = formatNumber(dislike)
-                })
-            })
-        }
-        
-        
-    }
-
-    window.addEventListener('onVideoIdChange', add_dislike_counts)
-    window.addEventListener('onShortsIdChange', add_dislike_counts)
-    */
 
 
     // Ads block
@@ -212,8 +145,8 @@ if (!window.injected){
             console.log('video quality setting changed')
             localStorage.setItem('video_quality', document.getElementById("movie_player").getPlaybackQuality())
         }
-    } 
-    
+    }
+
     document.addEventListener('change', save_quality)
     window.addEventListener('onVideoIdChange', set_quality)
 
@@ -258,7 +191,7 @@ if (!window.injected){
                             }
                         })
                     }
-                    
+
                     if (node.id === 'movie_player') {
                         window.last_player_state = -1
                         node.addEventListener('onStateChange', (data) => {
@@ -279,7 +212,7 @@ if (!window.injected){
                         let bDown = bSave.cloneNode(true)
                         bDown.id = 'downloadButton'
                         bDown.getElementsByClassName("yt-spec-button-shape-next__button-text-content")[0].innerText = values('download')
-                        
+
                         const svg = bDown.querySelector('svg')
                         if (svg) {
                             svg.setAttribute("viewBox", "0 -960 960 960")
@@ -293,6 +226,33 @@ if (!window.injected){
                             bSave.parentElement.insertBefore(bDown, bSave)
                         }
                     }
+
+                  // add extension button
+                  if (get_page_class(location.href) === 'select_site' && !document.getElementById('extensionButton')) {
+                        let settings = document.querySelector('ytm-settings');
+                        if (settings) {
+                            let button = settings.firstElementChild;
+                            if (button && button.querySelector('svg')) {
+                                let bExtension = button.cloneNode(true);
+                                bExtension.id = 'extensionButton';
+                                bExtension.querySelector('.yt-core-attributed-string').innerText = values('extension');
+
+                                const svg = bExtension.querySelector('svg');
+                                if (svg) {
+                                    svg.setAttribute("viewBox", "0 -960 960 960");
+                                    const path = svg.querySelector('path');
+                                    if (path) path.setAttribute("d", "M358.15-160H200q-16.85 0-28.42-11.58Q160-183.15 160-200v-158.15q34.15-10 57.08-37.81Q240-423.77 240-460q0-36.23-22.92-64.04-22.93-27.81-57.08-37.81V-720q0-16.85 11.58-28.42Q183.15-760 200-760h160q10.77-34.31 37.85-54.85 27.07-20.54 62.15-20.54t62.15 20.54Q549.23-794.31 560-760h160q16.85 0 28.42 11.58Q760-736.85 760-720v160q34.31 10.77 54.85 37.85 20.54 27.07 20.54 62.15t-20.54 62.15Q794.31-370.77 760-360v160q0 16.85-11.58 28.42Q736.85-160 720-160H561.85q-10.77-36.15-38.81-58.08Q495-240 460-240t-63.04 21.92q-28.04 21.93-38.81 58.08ZM200-200h131.92q17.08-39.85 52.77-59.92Q420.38-280 460-280q39.62 0 75.31 20.08Q571-239.85 588.08-200H720v-195.38h18.46q28.77-4.62 42.85-23.7 14.07-19.07 14.07-40.92t-14.07-40.92q-14.08-19.08-42.85-23.7H720V-720H524.62v-18.46q-4.62-28.77-23.7-42.85-19.07-14.07-40.92-14.07t-40.92 14.07q-19.08 14.08-23.7 42.85V-720H200v131.08q37.08 17.69 58.54 52.77Q280-501.08 280-460q0 40.85-21.46 75.92-21.46 35.08-58.54 53V-200Zm260-260Z");
+                                }
+                                bExtension.onclick = function () {
+                                    android.extension();
+                                };
+
+                                settings.insertBefore(bExtension, button);
+
+                            }
+                        }
+
+                  }
                 })
             }
         }
@@ -302,10 +262,10 @@ if (!window.injected){
         subtree: true
     })
 
-    
+
 
     window.injected = true
-    
+
 }} catch (error) {
     console.error(error)
     throw error

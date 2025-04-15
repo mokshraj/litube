@@ -8,6 +8,8 @@ import android.util.Log;
 
 import com.hhst.youtubelite.MainActivity;
 import com.hhst.youtubelite.downloader.DownloadDialog;
+import com.hhst.youtubelite.extension.ExtensionDialog;
+import com.hhst.youtubelite.extension.ExtensionManager;
 
 public class JavascriptInterface {
     private final Context context;
@@ -36,6 +38,13 @@ public class JavascriptInterface {
     public void download(String video_id){
         new Handler(Looper.getMainLooper()).post(
                 () -> new DownloadDialog(video_id, context).show()
+        );
+    }
+
+    @android.webkit.JavascriptInterface
+    public void extension(){
+        new Handler(Looper.getMainLooper()).post(
+                () -> new ExtensionDialog(context).show()
         );
     }
 

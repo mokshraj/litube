@@ -8,8 +8,8 @@ ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-ads"],
 ytd-ad-slot-renderer,
 yt-mealbar-promo-renderer,
 ad-slot-renderer,
-ytm-companion-ad-renderer,
-a.yt-spec-button-shape-next
+a.yt-spec-button-shape-next.yt-spec-button-shape-next--overlay,
+ytm-companion-ad-renderer
 {
-    display: none !important; 
+    display: none !important;
 }
