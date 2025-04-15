@@ -1,8 +1,6 @@
 package com.hhst.youtubelite;
 
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -68,7 +66,7 @@ public class FullScreenImageActivity extends AppCompatActivity {
             Picasso.get().load(url).into(photoView);
         } catch (Exception e) {
             Log.e(getString(R.string.failed_to_load_image), Log.getStackTraceString(e));
-            Toast.makeText(this, getString(R.string.failed_to_load_image), Toast.LENGTH_SHORT)
+            Toast.makeText(this, R.string.failed_to_load_image, Toast.LENGTH_SHORT)
                     .show();
         }
     }
@@ -101,7 +99,7 @@ public class FullScreenImageActivity extends AppCompatActivity {
                         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_thumbnail)));
                     } catch (IOException e) {
                         Log.e(getString(R.string.failed_to_download_thumbnail), Log.getStackTraceString(e));
-                        runOnUiThread(() -> Toast.makeText(this, getString(R.string.failed_to_download_thumbnail),
+                        runOnUiThread(() -> Toast.makeText(this, R.string.failed_to_download_thumbnail,
                                 Toast.LENGTH_SHORT).show());
                     }
                 });

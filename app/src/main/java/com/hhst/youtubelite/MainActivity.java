@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
                 YoutubeDL.getInstance().init(this);
                 FFmpeg.getInstance().init(this);
             } catch (YoutubeDLException e) {
-                Toast.makeText(this, getString(R.string.downloader_initialize_error), Toast.LENGTH_SHORT)
+                Toast.makeText(this, R.string.downloader_initialize_error, Toast.LENGTH_SHORT)
                         .show();
             }
             // try to update yt-dlp

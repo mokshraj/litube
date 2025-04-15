@@ -61,7 +61,7 @@ public class DownloadDialog {
                 if (e instanceof InterruptedException) return;
                 Log.e(context.getString(R.string.failed_to_load_video_details), Log.getStackTraceString(e));
                 new Handler(Looper.getMainLooper()).post(() ->
-                        Toast.makeText(context, context.getString(R.string.failed_to_load_video_details), Toast.LENGTH_SHORT).show());
+                        Toast.makeText(context, R.string.failed_to_load_video_details, Toast.LENGTH_SHORT).show());
 
             }
         });
@@ -213,7 +213,7 @@ public class DownloadDialog {
             Log.e(context.getString(R.string.failed_to_load_image), Log.getStackTraceString(e));
             dialogView.post(() ->
                     Toast.makeText(context,
-                            context.getString(R.string.failed_to_load_image),
+                            R.string.failed_to_load_image,
                             Toast.LENGTH_SHORT).show()
             );
         }

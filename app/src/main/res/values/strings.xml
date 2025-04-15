@@ -34,4 +34,5 @@
     <string name="save">Save</string>
     <string name="share">Share</string>
     <string name="share_thumbnail">Share Thumbnail</string>
+    <string name="application_not_found">application not found</string>
 </resources>

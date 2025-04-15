@@ -89,8 +89,8 @@ public class YoutubeWebview extends WebView {
                         Intent intent = Intent.parseUri(request.getUrl().toString(), Intent.URI_INTENT_SCHEME);
                         getContext().startActivity(intent);
                     } catch (ActivityNotFoundException | URISyntaxException e) {
-                        post(() -> Toast.makeText(getContext(), "application not found", Toast.LENGTH_SHORT).show());
-                        Log.e("IntentParsing", e.toString());
+                        post(() -> Toast.makeText(getContext(), R.string.application_not_found, Toast.LENGTH_SHORT).show());
+                        Log.e(getContext().getString(R.string.application_not_found), e.toString());
                     }
                 } else {
                     // restrict domain
@@ -207,6 +207,8 @@ public class YoutubeWebview extends WebView {
                 ((FrameLayout)mainActivity.getWindow().getDecorView()).
                         addView(fullscreen, new FrameLayout.LayoutParams(-1, -1));
                 fullscreen.setVisibility(View.VISIBLE);
+                // keep screen going on
+                fullscreen.setKeepScreenOn(true);
                 mainActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 evaluateJavascript(
                         "window.dispatchEvent(new Event('onFullScreen'));",
@@ -220,6 +222,7 @@ public class YoutubeWebview extends WebView {
                     return;
                 }
                 fullscreen.setVisibility(View.GONE);
+                fullscreen.setKeepScreenOn(false);
                 setVisibility(View.VISIBLE);
                 MainActivity mainActivity = (MainActivity) getContext();
                 mainActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
