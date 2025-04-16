@@ -37,7 +37,7 @@ import java.util.Objects;
 
 public class YoutubeWebview extends WebView {
 
-    private final ArrayList<String> js_res = new ArrayList<>();
+    private final ArrayList<String> scripts = new ArrayList<>();
 
     public View fullscreen = null;
 
@@ -134,7 +134,7 @@ public class YoutubeWebview extends WebView {
                         "window.dispatchEvent(new Event('onPageStarted'));",
                         null
                 );
-                for (String js : js_res) {
+                for (String js : scripts) {
                     evaluateJavascript(js, null);
                 }
             }
@@ -146,8 +146,7 @@ public class YoutubeWebview extends WebView {
                         "window.dispatchEvent(new Event('onPageFinished'));",
                         null
                 );
-                // load javascript
-                for (String js : js_res) {
+                for (String js : scripts) {
                     evaluateJavascript(js, null);
                 }
             }
@@ -242,22 +241,22 @@ public class YoutubeWebview extends WebView {
 
     public void injectJavaScript(InputStream jsInputStream) {
         String js = readInputStream(jsInputStream);
-        if (js != null) {
-            js_res.add(js);
-        }
+        if (js != null) scripts.add(js);
     }
 
     public void injectCSS(InputStream cssInputStream) {
         String css = readInputStream(cssInputStream);
         if (css != null) {
             String encodedCSS = Base64.getEncoder().encodeToString(css.getBytes());
-            String js = String.format("(function() {" +
-                    "var style = document.createElement('style');" +
-                    "style.type = 'text/css';" +
-                    "style.textContent = window.atob('%s');" +
-                    "document.head.appendChild(style);" +
-                    "})()", encodedCSS);
-            js_res.add(js);
+            String js = String.format("""
+                    (function(){
+                    let style = document.createElement('style');
+                    style.type = 'text/css';
+                    style.textContent = window.atob('%s');
+                    document.head.appendChild(style);
+                    })()
+                    """, encodedCSS);
+            scripts.add(js);
         }
     }
 

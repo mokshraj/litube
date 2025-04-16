@@ -17,7 +17,7 @@ public class ExtensionDialog {
     private final ExtensionManager manager;
     public ExtensionDialog(Context context) {
         this.context = context;
-        manager = new ExtensionManager(context);
+        manager = new ExtensionManager();
     }
 
     public void show() {
@@ -30,13 +30,12 @@ public class ExtensionDialog {
                         context.getString(R.string.hide_shorts))
         );
 
-        CharSequence[] items = extensions.stream()
-                .map(extension -> extension.description)
-                .toArray(CharSequence[]::new);
-
+        CharSequence[] items = new CharSequence[extensions.size()];
         boolean[] checked = new boolean[extensions.size()];
         for (int i = 0; i < extensions.size(); ++i) {
-            checked[i] = extensions.get(i).enable;
+            Extension ext = extensions.get(i);
+            items[i] = ext.description;
+            checked[i] = ext.enable;
         }
 
         new MaterialAlertDialogBuilder(context)
@@ -45,10 +44,13 @@ public class ExtensionDialog {
                 .setMultiChoiceItems(items, checked, (dialog, which, isChecked) ->
                         extensions.get(which).enable = isChecked)
                 .setPositiveButton(R.string.confirm, (dialog, which) -> {
+                    boolean isChanged = false;
                     for (Extension ext : extensions) {
+                        if (!manager.isEnable(ext.type).equals(ext.enable))
+                            isChanged = true;
                         manager.enableExtension(ext.type, ext.enable);
                     }
-                    RestartDialog.show(context);
+                    if (isChanged) RestartDialog.show(context);
                 })
                 .setNegativeButton(R.string.cancel, (dialog, which) ->
                         dialog.dismiss())

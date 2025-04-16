@@ -29,13 +29,15 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.hhst.youtubelite.downloader.DownloadService;
 import com.hhst.youtubelite.extension.ExtensionManager;
 import com.hhst.youtubelite.webview.YoutubeWebview;
+import com.tencent.mmkv.MMKV;
 import com.yausername.ffmpeg.FFmpeg;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 
-import java.io.File;
-import java.io.IOException;
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
         );
         swipeRefreshLayout.setProgressViewOffset(true, 80,180);
 
+        MMKV.initialize(this);
+
         Executors.newSingleThreadExecutor().execute(() -> {
             loadScript();
             runOnUiThread(() -> {
@@ -83,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
         requestPermissions();
         startDownloadService();
         initializeDownloader();
-
     }
 
     private static final int REQUEST_NOTIFICATION_CODE = 100;
@@ -118,32 +121,33 @@ public class MainActivity extends AppCompatActivity {
     private void loadScript(){
         AssetManager assetManager = getAssets();
 
-        List<String> res_pths = Arrays.asList("css", "js");
+        List<String> resourceDirs = Arrays.asList("css", "js");
         try{
-            for (String dir_path : res_pths) {
+            for (String dir : resourceDirs) {
                 List<String> resources = new ArrayList<>(
-                        Arrays.asList(Objects.requireNonNull(assetManager.list(dir_path)))
+                        Arrays.asList(Objects.requireNonNull(assetManager.list(dir)))
                 );
-                String init_res = resources.contains("init.js") ? "init.js" :
+                // inject init.js or init.min.js
+                String initScript = resources.contains("init.js") ? "init.js" :
                         resources.contains("init.min.js") ? "init.min.js" : null;
-                if (init_res != null){
+                if (initScript != null){
                     webview.injectJavaScript(
-                            assetManager.open(dir_path + File.separator + init_res));
-                    resources.remove(init_res);
+                            assetManager.open(Paths.get(dir, initScript).toString()));
+                    resources.
+                            remove(initScript);
                 }
-                resources = ExtensionManager.filter(this, resources);
-                for (String res : resources) {
-                    InputStream stream = assetManager.open(dir_path + File.separator
-                            + res);
-                    if (res.endsWith(".js")) {
+                resources = ExtensionManager.filter(resources);
+                for (String script : resources) {
+                    InputStream stream = assetManager.open(Paths.get(dir, script).toString());
+                    if (FilenameUtils.getExtension(script).equals("js")) {
                         webview.injectJavaScript(stream);
-                    } else if (res.endsWith(".css")) {
+                    } else if (FilenameUtils.getExtension(script).equals("css")) {
                         webview.injectCSS(stream);
                     }
                 }
             }
-        }catch (IOException e){
-            Log.e("IOException", e.toString());
+        } catch (Exception e){
+            Log.e("load scripts error", Log.getStackTraceString(e));
         }
 
     }
@@ -212,8 +216,4 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
 }

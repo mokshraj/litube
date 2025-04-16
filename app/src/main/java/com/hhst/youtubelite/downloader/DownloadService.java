@@ -66,7 +66,6 @@ public class DownloadService extends Service {
         super.onCreate();
         download_tasks = new ConcurrentHashMap<>();
         download_executor = Executors.newFixedThreadPool(max_download_tasks);
-        MMKV.initialize(this);
         cache = MMKV.defaultMMKV();
     }
 

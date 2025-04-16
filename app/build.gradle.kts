@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace = "com.hhst.youtubelite"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.hhst.litube"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 16
         versionName = "1.5.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -62,6 +62,10 @@ android {
         jniLibs {
             useLegacyPackaging = true
         }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     dependencies {
