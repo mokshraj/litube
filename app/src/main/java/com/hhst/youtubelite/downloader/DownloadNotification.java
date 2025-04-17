@@ -1,5 +1,6 @@
 package com.hhst.youtubelite.downloader;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -37,7 +38,7 @@ public class DownloadNotification {
         notificationManager.createNotificationChannel(channel);
     }
 
-    public void showNotification(String content, int progress) {
+    public Notification showNotification(String content, int progress) {
         Intent cancelIntent = new Intent(context, DownloadService.class);
         cancelIntent.setAction("CANCEL_DOWNLOAD");
         cancelIntent.putExtra("taskId", notificationId);
@@ -77,7 +78,9 @@ public class DownloadNotification {
                 .addAction(retryAction)
                 .setProgress(100, progress, false);
 
-        notificationManager.notify(notificationId, builder.build());
+        var notification = builder.build();
+        notificationManager.notify(notificationId, notification);
+        return notification;
     }
 
     public void updateProgress(int progress, String showing) {
