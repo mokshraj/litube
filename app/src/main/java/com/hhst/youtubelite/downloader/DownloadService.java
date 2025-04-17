@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -144,7 +145,7 @@ public class DownloadService extends Service {
         task.setNotification(notification);
         download_tasks.put(taskId, task);
 
-        download_executor.submit(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
                 Downloader.download(
                         "download_task" + taskId,
@@ -161,68 +162,66 @@ public class DownloadService extends Service {
                 showToast(getString(R.string.failed_to_download));
                 task.getNotification().cancelDownload(getString(R.string.failed_to_download));
                 task.setState(DownloaderState.STOPPED);
+                return;
             } catch (YoutubeDL.CanceledException e) {
                 Log.e(getString(R.string.failed_to_download), Log.getStackTraceString(e));
                 showToast(getString(R.string.download_canceled));
                 task.getNotification().cancelDownload(getString(R.string.download_canceled));
                 task.setState(DownloaderState.STOPPED);
+                return;
             } catch (InterruptedException e) {
                 Log.e(getString(R.string.failed_to_download), Log.getStackTraceString(e));
                 task.setState(DownloaderState.STOPPED);
+                return;
             }
-            try {
-                File audio = new File(getCacheDir(), task.getFileName() + ".m4a");
-                File video = new File(getCacheDir(), task.getFileName() + ".mp4");
-                File output;
-                // after download
-                if (task.getIsAudio()) {
-                    output = new File(task.getOutputDir(), task.getFileName() + ".m4a");
-                    task.setOutput(output);
-                    // Move audio file to public directory
-                    try {
-                        FileUtils.moveFile(audio, output);
-                    } catch (IOException e) {
-                        Log.e(getString(R.string.audio_move_error), Log.getStackTraceString(e));
-                        notificationHandler.post(()
-                                -> notification.cancelDownload(getString(R.string.audio_move_error)));
-                        showToast(getString(R.string.audio_move_error));
-                        return;
-                    }
-                    notificationHandler.post(() -> notification.completeDownload(
-                            String.format(getString(R.string.download_finished), fileName, output.getPath()),
-                            output,
-                            "audio/*"
-                    ));
-                } else {
-                    output = new File(task.getOutputDir(), task.getFileName() + ".mp4");
-                    task.setOutput(output);
-                    // Move video file to public directory
-                    try {
-                        FileUtils.moveFile(video, output);
-                    } catch (IOException e) {
-                        Log.e(getString(R.string.video_move_error), Log.getStackTraceString(e));
-                        notificationHandler.post(() ->
-                                notification.cancelDownload(getString(R.string.video_move_error)));
-                        showToast(getString(R.string.video_move_error));
-                        return;
-                    }
-                    notificationHandler.post(() ->
-                            notification.completeDownload(
-                                    String.format(getString(R.string.download_finished), fileName, output.getPath()),
-                                    output,
-                                    "video/*"
-                            ));
+            File audio = new File(getCacheDir(), task.getFileName() + ".m4a");
+            File video = new File(getCacheDir(), task.getFileName() + ".mp4");
+            File output;
+            // after download
+            if (task.getIsAudio()) {
+                output = new File(task.getOutputDir(), task.getFileName() + ".m4a");
+                task.setOutput(output);
+                // Move audio file to public directory
+                try {
+                    FileUtils.moveFile(audio, output);
+                } catch (IOException e) {
+                    Log.e(getString(R.string.audio_move_error), Log.getStackTraceString(e));
+                    notificationHandler.post(()
+                            -> notification.cancelDownload(getString(R.string.audio_move_error)));
+                    showToast(getString(R.string.audio_move_error));
+                    return;
                 }
-
-                showToast(String.format(getString(R.string.download_finished), fileName, output.getPath()));
-                // notify to scan
-                MediaScannerConnection.scanFile(this, new String[]{output.getAbsolutePath()}, null, null);
-                task.setState(DownloaderState.FINISHED);
-            } finally {
-                stopForeground(true);
+                notificationHandler.post(() -> notification.completeDownload(
+                        String.format(getString(R.string.download_finished), fileName, output.getPath()),
+                        output,
+                        "audio/*"
+                ));
+            } else {
+                output = new File(task.getOutputDir(), task.getFileName() + ".mp4");
+                task.setOutput(output);
+                // Move video file to public directory
+                try {
+                    FileUtils.moveFile(video, output);
+                } catch (IOException e) {
+                    Log.e(getString(R.string.video_move_error), Log.getStackTraceString(e));
+                    notificationHandler.post(() ->
+                            notification.cancelDownload(getString(R.string.video_move_error)));
+                    showToast(getString(R.string.video_move_error));
+                    return;
+                }
+                notificationHandler.post(() ->
+                        notification.completeDownload(
+                                String.format(getString(R.string.download_finished), fileName, output.getPath()),
+                                output,
+                                "video/*"
+                        ));
             }
 
-        });
+            showToast(String.format(getString(R.string.download_finished), fileName, output.getPath()));
+            // notify to scan
+            MediaScannerConnection.scanFile(this, new String[]{output.getAbsolutePath()}, null, null);
+            task.setState(DownloaderState.FINISHED);
+        }, download_executor).thenRun(() -> stopForeground(true));
 
     }
 
