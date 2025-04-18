@@ -181,13 +181,14 @@ if (!window.injected){
                         return
                     }
 
+                    const key = 'progress-' + get_video_id(location.href)
+                    const expiredTime = Math.floor((Date.now() + 3 * 24 * 60 * 60 * 1000) / 100000).toString();
                     if (node.classList.contains('video-stream')){
 
                         // memory progress
                         node.addEventListener('timeupdate', () => {
                             if (node.currentTime !== 0){
-                                localStorage.setItem('progress-' + get_video_id(location.href),
-                                node.currentTime.toString())
+                                localStorage.setItem(key, `${node.currentTime.toString()}-${expiredTime}`)
                             }
                         })
                     }
@@ -197,9 +198,14 @@ if (!window.injected){
                         node.addEventListener('onStateChange', (data) => {
                             if([1, 3].includes(data) && window.last_player_state === -1 && get_page_class(location.href) === 'watch'){
                                 // resume progress
-                                const saved_time = parseInt(localStorage.getItem('progress-' + get_video_id(location.href)) || '0')
+                                const savedItem = (localStorage.getItem(key) || '0-0').split('-')
+                                const saved_time = parseInt(savedItem[0])
+                                const saved_expired = parseInt(savedItem[1])
                                 if (saved_time > 5 && node.getDuration() - saved_time > 5) {
                                     node.seekTo(saved_time)
+                                }
+                                if (saved_expired > 0 && saved_expired < Math.floor(Date.now() / 100000).toString()) {
+                                    localStorage.removeItem(key)
                                 }
                             }
                             window.last_player_state = data

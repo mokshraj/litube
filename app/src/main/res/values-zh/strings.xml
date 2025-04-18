@@ -39,4 +39,5 @@
     <string name="restart">重启</string>
     <string name="display_dislikes">展示点踩数</string>
     <string name="hide_shorts">隐藏短视频</string>
+    <string name="h264ify">H264ify</string>
 </resources>

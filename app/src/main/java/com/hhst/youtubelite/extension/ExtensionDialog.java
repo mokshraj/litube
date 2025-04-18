@@ -27,7 +27,10 @@ public class ExtensionDialog {
                         context.getString(R.string.display_dislikes)),
                 new Extension(ExtensionType.HIDE_SHORTS,
                         manager.isEnable(ExtensionType.HIDE_SHORTS),
-                        context.getString(R.string.hide_shorts))
+                        context.getString(R.string.hide_shorts)),
+                new Extension(ExtensionType.H264IFY,
+                        manager.isEnable(ExtensionType.H264IFY),
+                        context.getString(R.string.h264ify))
         );
 
         CharSequence[] items = new CharSequence[extensions.size()];

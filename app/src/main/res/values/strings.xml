@@ -40,4 +40,5 @@
     <string name="restart">"Restart "</string>
     <string name="display_dislikes">Display dislikes</string>
     <string name="hide_shorts">Hide shorts</string>
+    <string name="h264ify">H264ify</string>
 </resources>
