@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
         requestPermissions();
         startDownloadService();
+        startPlaybackService();
         initializeDownloader();
     }
 
@@ -193,6 +194,24 @@ public class MainActivity extends AppCompatActivity {
         };
 
         Intent intent = new Intent(this, DownloadService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    public PlaybackService playbackService;
+    private void startPlaybackService() {
+        // bind
+        ServiceConnection connection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                playbackService = ((PlaybackService.PlaybackBinder) iBinder).getService();
+                playbackService.initialize(webview);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+            }
+        };
+        Intent intent = new Intent(this, PlaybackService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 

@@ -13,9 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-import com.google.gson.Gson;
 import com.hhst.youtubelite.R;
-import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 
@@ -29,8 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DownloadService extends Service {
 
@@ -40,34 +36,13 @@ public class DownloadService extends Service {
 
     private final Handler notificationHandler = new Handler(Looper.getMainLooper());
 
-    private MMKV cache;
-    private final Gson gson = new Gson();
 
-    public DownloadDetails infoWithCache(String url) throws Exception {
-        // get video id from url
-        Pattern pattern = Pattern.compile("^https?://.*(?:youtu\\.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$",
-                Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(url);
-        if (matcher.matches()) {
-            String id = matcher.group(1);
-            DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
-            // validate cached details
-            if (details == null || details.getTitle() == null || details.getAuthor() == null
-                    || details.getThumbnail() == null || details.getFormats() == null || details.getFormats().isEmpty()) {
-                details = Downloader.info(url);
-                cache.encode(id, gson.toJson(details), 60 * 60 * 24 * 7);
-            }
-            return details;
-        }
-        throw new RuntimeException("Invalid url");
-    }
 
     @Override
     public void onCreate() {
         super.onCreate();
         download_tasks = new ConcurrentHashMap<>();
         download_executor = Executors.newFixedThreadPool(max_download_tasks);
-        cache = MMKV.defaultMMKV();
     }
 
     @Override

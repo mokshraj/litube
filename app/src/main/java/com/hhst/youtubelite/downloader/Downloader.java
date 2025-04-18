@@ -3,6 +3,8 @@ package com.hhst.youtubelite.downloader;
 
 import android.util.Log;
 
+import com.google.gson.Gson;
+import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 import com.yausername.youtubedl_android.YoutubeDLRequest;
@@ -11,6 +13,8 @@ import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import java.io.File;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function3;
@@ -34,9 +38,32 @@ public class Downloader {
         details.setTitle(info.getTitle());
         details.setAuthor(info.getUploader());
         details.setDescription(info.getDescription());
+        details.setDuration((long) info.getDuration());
         details.setThumbnail(info.getThumbnail());
         details.setFormats(info.getFormats());
         return details;
+    }
+
+    private static final MMKV cache = MMKV.defaultMMKV();
+    private static final Gson gson = new Gson();
+
+    synchronized public static DownloadDetails infoWithCache(String url) throws Exception {
+        // get video id from url
+        Pattern pattern = Pattern.compile("^https?://.*(?:youtu\\.be/|v/|u/\\w/|embed/|watch\\?v=)([^#&?]*).*$",
+                Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(url);
+        if (matcher.matches()) {
+            String id = matcher.group(1);
+            DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
+            // validate cached details
+            if (details == null || details.getTitle() == null || details.getAuthor() == null
+                    || details.getThumbnail() == null || details.getFormats() == null || details.getFormats().isEmpty()) {
+                details = info(url);
+                cache.encode(id, gson.toJson(details), 60 * 60 * 24 * 7);
+            }
+            return details;
+        }
+        throw new RuntimeException("Invalid url");
     }
 
     public static void download(

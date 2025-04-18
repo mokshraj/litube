@@ -48,4 +48,19 @@ public class JavascriptInterface {
         );
     }
 
+    @android.webkit.JavascriptInterface
+    public void showPlayback(String url){
+        ((MainActivity)context).playbackService.showNotification(url);
+    }
+
+    @android.webkit.JavascriptInterface
+    public void hidePlayback(){
+        ((MainActivity)context).playbackService.hideNotification();
+    }
+
+    @android.webkit.JavascriptInterface
+    public void updatePlayback(long pos, float playbackSpeed, boolean isPlaying){
+        ((MainActivity)context).playbackService.updateProgress(pos, playbackSpeed, isPlaying);
+    }
+
 }

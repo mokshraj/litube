@@ -12,6 +12,7 @@ public class DownloadDetails {
     private String title;
     private String author;
     private String description;
+    private Long duration;
     private String thumbnail;
     private List<VideoFormat> formats;
 

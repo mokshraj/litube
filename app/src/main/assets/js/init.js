@@ -207,7 +207,30 @@ if (!window.injected){
                                 if (saved_expired > 0 && saved_expired < Math.floor(Date.now() / 100000).toString()) {
                                     localStorage.removeItem(key)
                                 }
-                            }
+
+                                // show and sync playback
+                                android.showPlayback(location.href);
+                                const player = node.querySelector('.video-stream');
+                                player.addEventListener('timeupdate', () => {
+
+                                    const currentTimeMs = Math.round(node.getCurrentTime() * 1000);
+                                    const isActuallyPlaying = (node.getPlayerState() === 1);
+                                    android.updatePlayback(
+                                        currentTimeMs,
+                                        node.getPlaybackRate(),
+                                        isActuallyPlaying
+                                    );
+                                });
+                                // listen to "play" event
+                                window.addEventListener('play', () => node.playVideo());
+                                // listen to "pause" event
+                                window.addEventListener('pause', () => node.pauseVideo());
+                                // listen to "skip" event
+                                window.addEventListener('skipToNext', () => node.nextVideo());
+                                window.addEventListener('skipToPrevious', () => node.previousVideo());
+                                // listen to "seekTo" event
+                                window.addEventListener('seek', e => node.seekTo(parseInt(e.detail.time)));
+                                                            }
                             window.last_player_state = data
                         })
                     }

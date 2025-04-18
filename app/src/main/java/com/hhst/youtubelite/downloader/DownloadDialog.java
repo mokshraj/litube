@@ -54,8 +54,8 @@ public class DownloadDialog {
         executor.submit(() -> {
             try {
                 // try to get details from cache
-                details = ((MainActivity) context).downloadService.infoWithCache(url);
-                if (details != null) latch.countDown();
+                details = Downloader.infoWithCache(url);
+                latch.countDown();
             } catch (Throwable e) {
                 // avoid some unnecessary toast
                 if (e instanceof InterruptedException) return;

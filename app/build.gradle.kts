@@ -77,6 +77,7 @@ android {
     implementation(libs.gson)
     implementation(libs.commons.io)
     implementation(libs.picasso)
+    implementation(libs.media)
     implementation(libs.photoview)
     implementation(libs.appcompat)
     implementation(libs.material)
