@@ -17,6 +17,11 @@
         {
             selector: 'a[href^="/shorts/"]',
             closest: 'ytm-video-with-context-renderer',
+        },
+        // shorts grid
+        {
+            selector: 'ytm-shorts-lockup-view-model',
+            closest: 'ytm-rich-section-renderer',
         }
     ];
 

@@ -74,29 +74,6 @@ if (!window.injected){
     window.addEventListener('onProgressChangeFinish', observe_shorts_id)
 
 
-    // Wait for the specific element to be loaded.
-    // ref: https://stackoverflow.com/questions/5525071/how-to-wait-until-an-element-exists
-    waitElem = (selector) => {
-        return new Promise(resolve => {
-            if (document.querySelector(selector)) {
-                return resolve(document.querySelector(selector))
-            }
-
-            const observer = new MutationObserver( () => {
-                if (document.querySelector(selector)) {
-                    observer.disconnect()
-                    resolve(document.querySelector(selector))
-                }
-            })
-
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            })
-        })
-    }
-
-
     // Ads block
     if (!window.originalFetch) {
         window.originalFetch = fetch
@@ -209,7 +186,11 @@ if (!window.injected){
                                 }
 
                                 // show and sync playback
-                                android.showPlayback(location.href);
+                                const title = document.title.replace(/\s*- YouTube$/, "");
+                                const thumbnail = `https://img.youtube.com/vi/${get_video_id(location.href)}/maxresdefault.jpg`;
+                                const duration = node.getDuration();
+                                android.showPlayback(title, thumbnail, duration);
+
                                 const player = node.querySelector('.video-stream');
                                 player.addEventListener('timeupdate', () => {
 
@@ -230,7 +211,7 @@ if (!window.injected){
                                 window.addEventListener('skipToPrevious', () => node.previousVideo());
                                 // listen to "seekTo" event
                                 window.addEventListener('seek', e => node.seekTo(parseInt(e.detail.time)));
-                                                            }
+                            }
                             window.last_player_state = data
                         })
                     }

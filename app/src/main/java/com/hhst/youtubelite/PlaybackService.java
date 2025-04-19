@@ -3,35 +3,29 @@ package com.hhst.youtubelite;
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import com.hhst.youtubelite.downloader.DownloadDetails;
-import com.hhst.youtubelite.downloader.Downloader;
 import com.hhst.youtubelite.webview.YoutubeWebview;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.Executors;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class PlaybackService extends Service {
 
@@ -89,7 +83,7 @@ public class PlaybackService extends Service {
                 super.onSeekTo(pos);
                 webview.evaluateJavascript(String.format(
                         "window.dispatchEvent(new CustomEvent('seek', { detail: { time: %d } }));",
-                        pos / 1000
+                        Math.round(pos / 1000f)
                 ), null);
             }
         });
@@ -97,18 +91,25 @@ public class PlaybackService extends Service {
 
 
     private Bitmap fetchThumbnail(String url) {
-        Request request = new Request.Builder().url(url).build();
-        try (Response response = new OkHttpClient().newCall(request).execute()) {
-            if (response.isSuccessful() && response.body() != null) {
-                InputStream inputStream = response.body().byteStream();
-                return BitmapFactory.decodeStream(inputStream);
-            } else {
-                Log.e("Failed to fetch image", response.message());
-            }
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setConnectTimeout(5000);
+            Bitmap original = BitmapFactory.decodeStream(conn.getInputStream());
+
+            // centered clip
+            int width = original.getWidth();
+            int height = original.getHeight();
+
+            int size = Math.min(width, height);
+
+            int x = (width - size) / 2;
+            int y = (height - size) / 2;
+
+            return Bitmap.createBitmap(original, x, y, size, size);
         } catch (IOException e) {
-            Log.e("Failed to fetch image", Log.getStackTraceString(e));
+            Log.e("fetch thumbnail error", Log.getStackTraceString(e));
+            return null;
         }
-        return null;
     }
 
     public void updateProgress(long pos, float playbackSpeed, boolean isPlaying) {
@@ -117,38 +118,52 @@ public class PlaybackService extends Service {
                 .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
                         PlaybackStateCompat.ACTION_SEEK_TO | PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
                         PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                .setState(state , pos, playbackSpeed)
+                .setState(state, pos, playbackSpeed)
                 .build();
         mediaSession.setPlaybackState(playbackState);
     }
 
-    public void showNotification(String url) {
+    public void showNotification(String title, String thumbnail, long duration) {
         Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                DownloadDetails details = Downloader.infoWithCache(url);
-                MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
-                builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, fetchThumbnail(details.getThumbnail()));
-                builder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, details.getTitle());
-                builder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, details.getAuthor());
-                builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, details.getDuration() * 1000);
-                mediaSession.setMetadata(builder.build());
+            // build metadata
+            MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, fetchThumbnail(thumbnail))
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration * 1000)
+                    .build();
+            mediaSession.setMetadata(metadata);
 
-                updateProgress(0L, 1f, false);
-
-                var notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setSmallIcon(R.drawable.ic_launcher_foreground)
-                        .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                                .setMediaSession(mediaSession.getSessionToken()))
-                        .build();
-
-                startForeground(100, notification);
-            } catch (Exception e) {
-                if (e instanceof InterruptedException) return;
-                Log.e(getString(R.string.failed_to_load_video_details), Log.getStackTraceString(e));
-                new Handler(Looper.getMainLooper()).post(() ->
-                        Toast.makeText(this, R.string.failed_to_load_video_details, Toast.LENGTH_SHORT).show());
+            // go back to app when click controller
+            Intent intent = getPackageManager()
+                    .getLaunchIntentForPackage(getPackageName());
+            if (intent == null) {
+                intent = new Intent(this, MainActivity.class);
             }
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                    this,
+                    101,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            // build notification
+            var notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                            .setMediaSession(mediaSession.getSessionToken()))
+                    .setContentIntent(pendingIntent)
+                    .build();
+
+            // initialize progress
+            updateProgress(0L, 1f, false);
+
+            // set to foreground service
+            startForeground(100, notification);
+
         });
+
 
     }
 
