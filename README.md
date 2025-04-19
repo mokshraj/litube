@@ -3,16 +3,17 @@ litube
 
 * litube is a lightweight Android WebView wrapper for YouTube, offering many additional features such as ads blocking, background play, video download and playback progress memory.
 
-## features
+## Features
 
-- ~~**Lightweight, the installation package is only a few MBs in size.**~~(Due to YouTube restrictions, the original download method has been deprecated. To restore this feature, I integrated `yt-dlp` and `ffmpeg`, which unfortunately compromises the lightweight feature of the app.
-   If you don't need the download functionality, feel free to use a previous release.)
+- ~~**Lightweight, the installation package is only a few MBs in size.**~~(Due to YouTube restrictions, the original download method has been deprecated. To restore this feature, I integrated `yt-dlp` and `ffmpeg`, which may not be that lightweight. If you don't need the download function, feel free to use the `lite` version instead.)
 
 * **Ad blocking, including sponsor ads and video ads.**
 * **Video download, supports downloading videos, audio-only, and saving thumbnails.**
 * **Background play.**
 * **Display video dislike count.**
-* **Playback progress memory, video quality memory, etc.**
+* **Hide shorts, etc.**
+
+> It is highly recommended to ignore battery optimization and allow background activity for this app to prevent it from being mistakenly killed by the system.
 
 ## Screenshots
 
