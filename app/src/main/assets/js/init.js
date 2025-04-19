@@ -147,6 +147,25 @@ if (!window.injected){
         }
     })
 
+    // wait metadata, used in playback
+    function waitMetadata() {
+        // timeout = 5000, interval = 100
+        return new Promise((resolve, reject) => {
+            const interval = setInterval(() => {
+                const author = document.querySelector('.slim-owner-bylines')?.querySelector('.yt-core-attributed-string').innerText;
+                if (author) {
+                    clearInterval(interval);
+                    clearTimeout(timer);
+                    resolve(author);
+                }
+            }, 100);
+            
+            const timer = setTimeout(() => {
+                clearInterval(interval);
+                reject(new Error("wait metadata timeout"));
+            }, 5000);
+        });
+    }
 
     // init video player
 
@@ -186,10 +205,15 @@ if (!window.injected){
                                 }
 
                                 // show and sync playback
-                                const title = document.title.replace(/\s*- YouTube$/, "");
-                                const thumbnail = `https://img.youtube.com/vi/${get_video_id(location.href)}/maxresdefault.jpg`;
-                                const duration = node.getDuration();
-                                android.showPlayback(title, thumbnail, duration);
+                                waitMetadata().then(author => {
+                                    const title = document.title.replace(/\s*- YouTube$/, "");
+                                    const thumbnail = `https://img.youtube.com/vi/${get_video_id(location.href)}/hqdefault.jpg`;
+                                    const duration = node.getDuration();
+                                android.showPlayback(title, author, thumbnail, duration);
+                                }).catch((e) => {
+                                    console.log(e);
+                                });
+                                
 
                                 const player = node.querySelector('.video-stream');
                                 player.addEventListener('timeupdate', () => {

@@ -49,8 +49,8 @@ public class JavascriptInterface {
     }
 
     @android.webkit.JavascriptInterface
-    public void showPlayback(String title, String thumbnail, long duration){
-        ((MainActivity)context).playbackService.showNotification(title, thumbnail, duration);
+    public void showPlayback(String title, String author, String thumbnail, long duration){
+        ((MainActivity)context).playbackService.showNotification(title, author, thumbnail, duration);
     }
 
     @android.webkit.JavascriptInterface

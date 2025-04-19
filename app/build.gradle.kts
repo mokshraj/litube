@@ -14,15 +14,8 @@ android {
         versionName = "1.5.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
-            splits {
-                abi {
-                    isEnable = true
-                    reset()
-                    include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
-                    isUniversalApk = true
-                }
+            abiFilters.addAll(listOf("arm64-v8a"))
         }
-    }
 
     buildTypes {
         release {

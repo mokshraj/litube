@@ -123,12 +123,13 @@ public class PlaybackService extends Service {
         mediaSession.setPlaybackState(playbackState);
     }
 
-    public void showNotification(String title, String thumbnail, long duration) {
+    public void showNotification(String title, String author, String thumbnail, long duration) {
         Executors.newSingleThreadExecutor().execute(() -> {
             // build metadata
             MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
                     .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, fetchThumbnail(thumbnail))
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, author)
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration * 1000)
                     .build();
             mediaSession.setMetadata(metadata);
