@@ -15,7 +15,8 @@ public enum ExtensionType {
 
     DISPLAY_DISLIKES("display_dislikes", true),
     HIDE_SHORTS("hide_shorts", false),
-    H264IFY("h264ify", false)
+    H264IFY("h264ify", false),
+    LIVE_CHAT("live_chat", false)
     ;
 
     private final String script;

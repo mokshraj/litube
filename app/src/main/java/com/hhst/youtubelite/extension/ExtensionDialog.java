@@ -30,7 +30,10 @@ public class ExtensionDialog {
                         context.getString(R.string.hide_shorts)),
                 new Extension(ExtensionType.H264IFY,
                         manager.isEnable(ExtensionType.H264IFY),
-                        context.getString(R.string.h264ify))
+                        context.getString(R.string.h264ify)),
+                new Extension(ExtensionType.LIVE_CHAT,
+                        manager.isEnable(ExtensionType.LIVE_CHAT),
+                        context.getString(R.string.enable_live_chat))
         );
 
         CharSequence[] items = new CharSequence[extensions.size()];

@@ -41,4 +41,5 @@
     <string name="display_dislikes">Display dislikes</string>
     <string name="hide_shorts">Hide shorts</string>
     <string name="h264ify">H264ify</string>
+    <string name="enable_live_chat">Enable live chat</string>
 </resources>

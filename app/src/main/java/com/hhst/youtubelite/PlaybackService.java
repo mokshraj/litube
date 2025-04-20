@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -87,6 +89,7 @@ public class PlaybackService extends Service {
                 ), null);
             }
         });
+        mediaSession.setActive(true);
     }
 
 
@@ -112,12 +115,20 @@ public class PlaybackService extends Service {
         }
     }
 
+    private final Handler handler = new Handler(Looper.getMainLooper());
+
+    private long lastProgressPos = 0L;
+    private final Runnable timeoutRunnable = () -> updateProgress(lastProgressPos, 1f, false);
+
     public void updateProgress(long pos, float playbackSpeed, boolean isPlaying) {
+        handler.removeCallbacks(timeoutRunnable);
+        handler.postDelayed(timeoutRunnable, 1000);
+        lastProgressPos = pos;
         var state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
         PlaybackStateCompat playbackState = new PlaybackStateCompat.Builder()
                 .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
-                        PlaybackStateCompat.ACTION_SEEK_TO | PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                        PlaybackStateCompat.ACTION_SEEK_TO)
                 .setState(state, pos, playbackSpeed)
                 .build();
         mediaSession.setPlaybackState(playbackState);
