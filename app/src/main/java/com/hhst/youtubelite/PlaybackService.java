@@ -1,6 +1,7 @@
 package com.hhst.youtubelite;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -20,6 +21,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.media.session.MediaButtonReceiver;
 
 import com.hhst.youtubelite.webview.YoutubeWebview;
 
@@ -33,10 +35,12 @@ public class PlaybackService extends Service {
 
     private MediaSessionCompat mediaSession;
     private static final String CHANNEL_ID = "player_channel";
+    private static final int NOTIFICATION_ID = 100;
     private NotificationManager notificationManager;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        MediaButtonReceiver.handleIntent(mediaSession, intent);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -59,12 +63,26 @@ public class PlaybackService extends Service {
             public void onPlay() {
                 super.onPlay();
                 webview.evaluateJavascript("window.dispatchEvent(new Event('play'));", null);
+
+                // --- Update Notification ---
+                Notification updatedNotification = buildNotification(true);
+                if (updatedNotification != null && notificationManager != null) {
+                    notificationManager.notify(NOTIFICATION_ID, updatedNotification);
+                }
+                // --- End Update ---
             }
 
             @Override
             public void onPause() {
                 super.onPause();
                 webview.evaluateJavascript("window.dispatchEvent(new Event('pause'));", null);
+
+                // --- Update Notification ---
+                Notification updatedNotification = buildNotification(false);
+                if (updatedNotification != null && notificationManager != null) {
+                    notificationManager.notify(NOTIFICATION_ID, updatedNotification);
+                }
+                // --- End Update ---
             }
 
             @Override
@@ -134,49 +152,87 @@ public class PlaybackService extends Service {
         mediaSession.setPlaybackState(playbackState);
     }
 
+    // Helper method to build the notification based on current state
+    private Notification buildNotification(boolean isPlaying) {
+        // 1. Get current metadata from MediaSession
+        MediaMetadataCompat metadata = mediaSession.getController().getMetadata();
+        if (metadata == null) {
+            // Handle case where metadata isn't available yet
+            Log.w("PlaybackService", "Cannot build notification: Metadata is null");
+            return null;
+        }
+
+        Bitmap largeIcon = metadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
+        String title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE);
+        String artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+
+        // 2. Choose icon and title based on isPlaying
+        int playPauseIconResId = isPlaying ? R.drawable.ic_pause : R.drawable.ic_play;
+        String playPauseActionTitle = isPlaying ? "Pause" : "Play";
+
+        // 3. Rebuild PendingIntent for app launch
+        Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        if (intent == null) {
+            intent = new Intent(this, MainActivity.class);
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 101, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        // 4. Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle(title)
+                .setContentText(artist)
+                .setLargeIcon(largeIcon)
+                .setContentIntent(pendingIntent)
+                .setOngoing(isPlaying) // Keep notification when playing
+                // --- Actions ---
+                .addAction(R.drawable.ic_previous, "Previous", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS))
+                .addAction(playPauseIconResId, playPauseActionTitle, MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)) // Dynamic Icon
+                .addAction(R.drawable.ic_next, "Next", MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT))
+                // --- Media Style ---
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(mediaSession.getSessionToken())
+                        .setShowActionsInCompactView(0, 1, 2));
+
+        return builder.build();
+    }
+
     public void showNotification(String title, String author, String thumbnail, long duration) {
         Executors.newSingleThreadExecutor().execute(() -> {
-            // build metadata
+            Bitmap largeIcon = fetchThumbnail(thumbnail);
+
+            // Build initial metadata
             MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
-                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, fetchThumbnail(thumbnail))
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, largeIcon)
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, author)
                     .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration * 1000)
                     .build();
-            mediaSession.setMetadata(metadata);
+            mediaSession.setMetadata(metadata); // Set metadata FIRST
 
-            // go back to app when click controller
-            Intent intent = getPackageManager()
-                    .getLaunchIntentForPackage(getPackageName());
-            if (intent == null) {
-                intent = new Intent(this, MainActivity.class);
-            }
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-            PendingIntent pendingIntent = PendingIntent.getActivity(
-                    this,
-                    101,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-            );
-
-            // build notification
-            var notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                            .setMediaSession(mediaSession.getSessionToken()))
-                    .setContentIntent(pendingIntent)
+            // Build initial playback state
+            PlaybackStateCompat initialState = new PlaybackStateCompat.Builder()
+                    .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
+                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                            PlaybackStateCompat.ACTION_SEEK_TO)
+                    .setState(PlaybackStateCompat.STATE_PAUSED, 0L, 1f)
                     .build();
+            mediaSession.setPlaybackState(initialState); // Set the state in the session
 
-            // initialize progress
-            updateProgress(0L, 1f, false);
+            // Build the initial notification
+            Notification initialNotification = buildNotification(true);
 
-            // set to foreground service
-            startForeground(100, notification);
-
+            if (initialNotification != null) {
+                // Start foreground service with the initial notification
+                startForeground(NOTIFICATION_ID, initialNotification);
+            } else {
+                Log.e("PlaybackService", "Failed to create initial notification.");
+            }
         });
-
-
     }
 
     public void hideNotification() {

@@ -31,6 +31,13 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+        <receiver android:name="androidx.media.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".downloader.DownloadService"
             android:foregroundServiceType="dataSync"
@@ -38,7 +45,11 @@
 
         <service android:name=".PlaybackService"
             android:foregroundServiceType="mediaPlayback"
-            android:exported="false" />
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".MainActivity"
