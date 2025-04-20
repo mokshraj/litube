@@ -42,4 +42,8 @@
     <string name="hide_shorts">Hide shorts</string>
     <string name="h264ify">H264ify</string>
     <string name="enable_live_chat">Enable live chat</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_play">Play</string>
+    <string name="action_previous">Skip to previous</string>
+    <string name="action_next">Skip to next</string>
 </resources>

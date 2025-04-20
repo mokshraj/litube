@@ -52,10 +52,6 @@ public class JavascriptInterface {
         ((MainActivity)context).playbackService.showNotification(title, author, thumbnail, duration);
     }
 
-    @android.webkit.JavascriptInterface
-    public void hidePlayback(){
-        ((MainActivity)context).playbackService.hideNotification();
-    }
 
     @android.webkit.JavascriptInterface
     public void updatePlayback(long pos, float playbackSpeed, boolean isPlaying){

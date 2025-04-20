@@ -40,4 +40,9 @@
     <string name="display_dislikes">展示点踩数</string>
     <string name="hide_shorts">隐藏短视频</string>
     <string name="h264ify">H264ify</string>
+    <string name="enable_live_chat">启用直播聊天</string>
+    <string name="action_pause">暂停</string>
+    <string name="action_play">播放</string>
+    <string name="action_previous">下一个</string>
+    <string name="action_next">上一个</string>
 </resources>
