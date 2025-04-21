@@ -242,6 +242,7 @@ public class PlaybackService extends Service {
     private final Runnable timeoutRunnable = () -> updateProgress(lastProgressPos, 1f, false);
 
     public void updateProgress(long pos, float playbackSpeed, boolean isPlaying) {
+        // disable update while seeking
         if (isSeeking) return;
 
         handler.removeCallbacks(timeoutRunnable);
@@ -258,6 +259,7 @@ public class PlaybackService extends Service {
                 .build();
 
         mediaSession.setPlaybackState(playbackState);
+        // disable update notification if state isn't change
         if (isPlaying != lastIsPlayingState) {
             Notification updatedNotification = buildNotification(isPlaying);
             if (updatedNotification != null) {
@@ -277,6 +279,6 @@ public class PlaybackService extends Service {
             mediaSession = null;
         }
         handler.removeCallbacksAndMessages(null);
-        executorService.shutdown();
+        executorService.shutdownNow();
     }
 }

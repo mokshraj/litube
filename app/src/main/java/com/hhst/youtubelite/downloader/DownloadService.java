@@ -357,6 +357,8 @@ public class DownloadService extends Service {
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
+        stopForeground(Service.STOP_FOREGROUND_REMOVE);
         // clear all notifications
         for (DownloadTask task : download_tasks.values()) {
             task.getNotification().clearAll();
@@ -373,7 +375,6 @@ public class DownloadService extends Service {
         if (download_executor != null && !download_executor.isShutdown()) {
             download_executor.shutdownNow();
         }
-        super.onDestroy();
     }
 
 }
