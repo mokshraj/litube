@@ -1,7 +1,7 @@
 package com.hhst.youtubelite.downloader;
 
 public enum DownloaderState {
-
-    RUNNING, STOPPED, FINISHED
-
+  RUNNING,
+  STOPPED,
+  FINISHED
 }

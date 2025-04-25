@@ -5,7 +5,6 @@
     <string name="video">Video</string>
     <string name="cancel">Cancel</string>
     <string name="download">Download</string>
-    <string name="select_quality">Select quality: </string>
     <string name="video_quality">Video Quality</string>
     <string name="confirm">Confirm</string>
     <string name="downloading">"Downloading: "</string>
@@ -21,11 +20,9 @@
     <string name="failed_to_download_thumbnail">"Failed to download thumbnail "</string>
     <string name="failed_to_load_image">"Failed to load image "</string>
     <string name="failed_to_load_video_details">"Failed to load video details "</string>
-    <string name="failed_to_load_available_video_quality">"Failed to load available video quality "</string>
     <string name="delete">Delete</string>
     <string name="file_deleted">File deleted</string>
     <string name="audio_only">Audio Only</string>
-    <string name="timeout_occurred_while_downloading_retrying">Timeout occurred while downloading, retrying…</string>
     <string name="audio_move_error">Failed to move audio file to public directory</string>
     <string name="video_move_error">Failed to move video file to public directory</string>
     <string name="downloader_initialize_error">Failed to initialize the downloader</string>
