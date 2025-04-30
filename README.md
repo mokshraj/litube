@@ -1,9 +1,7 @@
 litube
 ============
 
-* litube is a lightweight Android WebView wrapper for YouTube, offering many additional features such as ads blocking, background play, video download and playback progress memory.
-
-**Note: This app should not be regarded as an alternative to other YouTube clients. My primary motivation for developing this app is to enhance the experience of watching YouTube in a browser, especially when using extensions may not be convenient on mobile, and to serve as a download tool — which is why I compromised the lightweight feature that a WebView app should have to integrate `yt-dlp` and `ffmpeg`. Personally, I would rather watch YouTube using the official YouTube app or YouTube Vanced, which provide a much smoother experience.**
+litube is a lightweight Android WebView wrapper for YouTube, offering many additional features such as ads blocking, background play, video download and playback progress memory.
 
 ## Features
 
@@ -23,7 +21,7 @@ litube
 
 
 
-
+**Note: This app should not be regarded as an alternative to other YouTube clients. My primary motivation for developing this app is to enhance the experience of watching YouTube in a browser, especially when using extensions may not be convenient on mobile, and to serve as a download tool — which is why I compromised the lightweight feature that a WebView app should have to integrate `yt-dlp` and `ffmpeg`. Personally, I would rather watch YouTube using the official YouTube app or YouTube Vanced, which provide a much smoother experience.**
 
 
 
