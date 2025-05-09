@@ -28,6 +28,7 @@ public class Downloader {
   public static DownloadDetails info(String video_url)
       throws YoutubeDL.CanceledException, YoutubeDLException, InterruptedException {
     YoutubeDLRequest request = new YoutubeDLRequest(video_url);
+    request.addOption("--retries", 3);
     VideoInfo info = YoutubeDL.getInstance().getInfo(request);
     DownloadDetails details = new DownloadDetails();
     details.setId(info.getId());
