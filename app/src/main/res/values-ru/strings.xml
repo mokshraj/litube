@@ -14,11 +14,11 @@
     <string name="download_canceled">Скачивание отменено </string>
     <string name="thumbnail_has_been_saved_to">Миниатюра сохранена в:  </string>
     <string name="download_finished">Скачивание завершено:  \"%s\" сохранено в \"%s\"</string>
-    <string name="retry_download">"Повторить скачивание "</string>
+    <string name="retry_download">Повторное скачивание </string>
     <string name="failed_to_download">Не удалось скачать</string>
     <string name="download_canceled_err">Скачивание отменено: поскольку оно уже завершено или уже завершилась с ошибкой</string>
     <string name="failed_to_download_thumbnail">Не удалось загрузить миниатюру </string>
-    <string name="failed_to_load_image">"Не удалось загрузить изображение "</string>
+    <string name="failed_to_load_image">Не удалось загрузить изображение </string>
     <string name="failed_to_load_video_details">"Не удалось загрузить сведения о видео "</string>
     <string name="delete">Удалить</string>
     <string name="file_deleted">Файл удален</string>
