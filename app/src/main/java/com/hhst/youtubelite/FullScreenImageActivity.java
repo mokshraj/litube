@@ -22,16 +22,24 @@ import java.net.URL;
 import java.util.concurrent.Executors;
 import org.apache.commons.io.FileUtils;
 
+/**
+ * Show the thumbnail image in full screen mode.
+ */
 public class FullScreenImageActivity extends AppCompatActivity {
 
+  // thumbnail resource url
   private String url;
+
+  // thumbnail filename, used for saving or caching
   private String filename;
+
+  // thumbnail file to cache
   private volatile File file;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_full_screen_image);
+    setContentView(R.layout.activity_fullscreen_image);
     getWindow()
         .setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);

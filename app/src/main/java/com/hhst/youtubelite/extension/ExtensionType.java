@@ -12,16 +12,18 @@ public enum ExtensionType {
   DISPLAY_DISLIKES("display_dislikes", true),
   HIDE_SHORTS("hide_shorts", false),
   H264IFY("h264ify", false),
-  LIVE_CHAT("live_chat", false);
+  LIVE_CHAT("live_chat", false),
+  CPU_TAMER("cpu_tamer", false),
+  SKIP_SPONSORS("skip_sponsors", false);
 
   private static final Map<String, ExtensionType> EXT_MAP =
       Arrays.stream(ExtensionType.values())
-          .collect(Collectors.toMap(ExtensionType::getScript, Function.identity()));
-  private final String script;
+          .collect(Collectors.toMap(ExtensionType::getName, Function.identity()));
+  private final String name;
   private final Boolean defaultEnable;
 
-  ExtensionType(String script, Boolean defaultEnable) {
-    this.script = script;
+  ExtensionType(String name, Boolean defaultEnable) {
+    this.name = name;
     this.defaultEnable = defaultEnable;
   }
 

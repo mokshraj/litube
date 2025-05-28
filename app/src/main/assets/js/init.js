@@ -195,7 +195,7 @@ try {
                                         // Show and sync playback controls with Android
                                         const title = node.getPlayerResponse().videoDetails.title;
                                         const author = node.getPlayerResponse().videoDetails.author;
-                                        const thumbnail = `https://img.youtube.com/vi/${getVideoId(location.href)}/hqdefault.jpg`;
+                                        const thumbnail = `https://img.youtube.com/vi/${getVideoId(location.href)}/sddefault.jpg`;
                                         const duration = node.getDuration();
                                         android.showPlayback(title, author, thumbnail, duration);
 
@@ -218,7 +218,7 @@ try {
                             }
                         }
 
-                        // Add download button on watch page
+                        // Add download button on watching page
                         if (getPageClass(location.href) === 'watch' && !document.getElementById('downloadButton')) {
                             const saveButton = document.querySelector('.yt-spec-button-view-model.slim_video_action_bar_renderer_button');
                             if (saveButton) {
@@ -237,7 +237,9 @@ try {
                                     }
                                 }
                                 downloadButton.addEventListener('click', () => {
-                                    android.download(location.href);
+                                    // opt: fetch video details
+                                    const video = document.querySelector("#movie_player");
+                                    android.download(location.href, JSON.stringify(video?.getPlayerResponse()))
                                 });
                                 saveButton.parentElement.insertBefore(downloadButton, saveButton);
                             } else {

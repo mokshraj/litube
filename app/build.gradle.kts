@@ -13,21 +13,25 @@ android {
         versionCode = 17
         versionName = "1.5.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        ndk {
+        """
+            ndk { 
             abiFilters.addAll(listOf("arm64-v8a"));
         }
+        """.trimIndent()
+
+        ndk {
+            splits {
+                abi {
+                    isEnable = true
+                    reset()
+                    include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+                    isUniversalApk = true
+                }
+        }
+    }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-
-        debug {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

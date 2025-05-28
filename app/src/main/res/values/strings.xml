@@ -37,10 +37,18 @@
     <string name="restart">"Restart "</string>
     <string name="display_dislikes">Display dislikes</string>
     <string name="hide_shorts">Hide shorts</string>
-    <string name="h264ify">H264ify</string>
+    <string name="h264ify">H264ify(makes YouTube stream H.264 videos instead of VP8/VP9 videos.)</string>
     <string name="enable_live_chat">Enable live chat</string>
     <string name="action_pause">Pause</string>
     <string name="action_play">Play</string>
     <string name="action_previous">Skip to previous</string>
     <string name="action_next">Skip to next</string>
+    <string name="general">General</string>
+    <string name="player">Player</string>
+    <string name="ads">Ads</string>
+    <string name="downloader">Downloader</string>
+    <string name="other">Other</string>
+    <string name="cpu_tamer_experimental">Reduce CPU load on YouTube using hybrid DOMMutation + AnimationFrame strategy with dynamic switching and delay correction(Experimental)</string>
+    <string name="skip_sponsors">Skip sponsors/SelfPromo</string>
+    <string name="failed_to_load_video_formats">failed to load video formats</string>
 </resources>

@@ -38,21 +38,24 @@ public class DownloadDialog {
 
   private final String url;
   private final ExecutorService executor;
-  private final CountDownLatch latch;
+  private final CountDownLatch detailsLatch;
+  private final CountDownLatch formatsLatch;
   private DownloadDetails details;
+  private List<VideoFormat> formats;
   private View dialogView;
 
-  public DownloadDialog(String url, Context context) {
+  public DownloadDialog(String url, String detailsData, Context context) {
     this.url = url;
     this.context = context;
     executor = Executors.newCachedThreadPool();
-    latch = new CountDownLatch(1);
+    detailsLatch = new CountDownLatch(1);
+    formatsLatch = new CountDownLatch(1);
     executor.submit(
         () -> {
           try {
             // try to get details from cache
-            details = Downloader.infoWithCache(url);
-            latch.countDown();
+            details = Downloader.infoWithCache(url, detailsData);
+            detailsLatch.countDown();
           } catch (Throwable e) {
             // avoid some unnecessary toast
             if (e instanceof InterruptedException) return;
@@ -64,6 +67,26 @@ public class DownloadDialog {
                     () ->
                         Toast.makeText(
                                 context, R.string.failed_to_load_video_details, Toast.LENGTH_SHORT)
+                            .show());
+          }
+        });
+    executor.submit(
+        () -> {
+          try {
+            // try to get formats from cache
+            formats = Downloader.fetchFormats(url);
+            formatsLatch.countDown();
+          } catch (Throwable e) {
+            // avoid some unnecessary toast
+            if (e instanceof InterruptedException) return;
+            Log.e(
+                context.getString(R.string.failed_to_load_video_formats),
+                Log.getStackTraceString(e));
+            new Handler(Looper.getMainLooper())
+                .post(
+                    () ->
+                        Toast.makeText(
+                                context, R.string.failed_to_load_video_formats, Toast.LENGTH_SHORT)
                             .show());
           }
         });
@@ -117,7 +140,7 @@ public class DownloadDialog {
     executor.submit(
         () -> {
           try {
-            latch.await();
+            detailsLatch.await();
             if (progressBar != null && progressBar.getVisibility() == View.VISIBLE)
               dialogView.post(() -> progressBar.setVisibility(View.GONE));
             // load image
@@ -269,7 +292,7 @@ public class DownloadDialog {
       int themeColor) {
     View dialogView = View.inflate(context, R.layout.quality_selector, null);
     ProgressBar progressBar = dialogView.findViewById(R.id.loadingBar2);
-    if (progressBar != null && details == null) progressBar.setVisibility(View.VISIBLE);
+    if (progressBar != null && formats == null) progressBar.setVisibility(View.VISIBLE);
     AlertDialog qualityDialog =
         new MaterialAlertDialogBuilder(context)
             .setTitle(context.getString(R.string.video_quality))
@@ -291,7 +314,7 @@ public class DownloadDialog {
     executor.submit(
         () -> {
           try {
-            latch.await();
+            formatsLatch.await();
             if (progressBar != null && progressBar.getVisibility() == View.VISIBLE) {
               dialogView.post(() -> progressBar.setVisibility(View.GONE));
               qualityDialog.dismiss();
@@ -301,52 +324,49 @@ public class DownloadDialog {
                           selectedQuality, isVideoSelected, videoButton, themeColor));
             }
             AtomicLong audioSize = new AtomicLong();
-            details
-                .getFormats()
-                .forEach(
-                    it -> {
-                      String ext = it.getExt();
-                      if ("m4a".equals(ext)) {
-                        audioSize.updateAndGet(current -> Math.max(it.getFileSize(), current));
+            formats.forEach(
+                it -> {
+                  String ext = it.getExt();
+                  if ("m4a".equals(ext)) {
+                    audioSize.updateAndGet(current -> Math.max(it.getFileSize(), current));
+                  }
+                  List<String> bad_formats = List.of("233", "234", "616");
+                  String format_note = it.getFormatNote();
+                  if ("mp4".equals(ext)
+                      && !bad_formats.contains(it.getFormatId())
+                      && format_note != null) {
+                    // avoid duplicate labels
+                    if (!quality_labels.contains(it.getFormatNote())) {
+                      quality_labels.add(it.getFormatNote());
+                      CheckBox choice = new CheckBox(context);
+                      choice.setText(
+                          String.format(
+                              "%s (%s)",
+                              it.getFormatNote(), formatSize(audioSize.get() + it.getFileSize())));
+                      choice.setLayoutParams(
+                          new RadioGroup.LayoutParams(
+                              RadioGroup.LayoutParams.MATCH_PARENT,
+                              RadioGroup.LayoutParams.WRAP_CONTENT));
+                      choice.setOnCheckedChangeListener(
+                          (v, isChecked) -> {
+                            if (isChecked) {
+                              if (checked_box.get() != null) {
+                                checked_box.get().setChecked(false);
+                              }
+                              selected_format.set(it);
+                              checked_box.set((CheckBox) v);
+                            } else {
+                              selected_format.set(null);
+                              checked_box.set(null);
+                            }
+                          });
+                      quality_selector.addView(choice);
+                      if (selectedQuality.get() != null && selectedQuality.get().equals(it)) {
+                        choice.setChecked(true);
                       }
-                      List<String> bad_formats = List.of("233", "234", "616");
-                      String format_note = it.getFormatNote();
-                      if ("mp4".equals(ext)
-                          && !bad_formats.contains(it.getFormatId())
-                          && format_note != null) {
-                        // avoid duplicate labels
-                        if (!quality_labels.contains(it.getFormatNote())) {
-                          quality_labels.add(it.getFormatNote());
-                          CheckBox choice = new CheckBox(context);
-                          choice.setText(
-                              String.format(
-                                  "%s (%s)",
-                                  it.getFormatNote(),
-                                  formatSize(audioSize.get() + it.getFileSize())));
-                          choice.setLayoutParams(
-                              new RadioGroup.LayoutParams(
-                                  RadioGroup.LayoutParams.MATCH_PARENT,
-                                  RadioGroup.LayoutParams.WRAP_CONTENT));
-                          choice.setOnCheckedChangeListener(
-                              (v, isChecked) -> {
-                                if (isChecked) {
-                                  if (checked_box.get() != null) {
-                                    checked_box.get().setChecked(false);
-                                  }
-                                  selected_format.set(it);
-                                  checked_box.set((CheckBox) v);
-                                } else {
-                                  selected_format.set(null);
-                                  checked_box.set(null);
-                                }
-                              });
-                          quality_selector.addView(choice);
-                          if (selectedQuality.get() != null && selectedQuality.get().equals(it)) {
-                            choice.setChecked(true);
-                          }
-                        }
-                      }
-                    });
+                    }
+                  }
+                });
           } catch (Exception e) {
             Log.e("When show VideoQualityDialog", Log.getStackTraceString(e));
           }

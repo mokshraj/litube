@@ -1,7 +1,11 @@
 package com.hhst.youtubelite.downloader;
 
 import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 import com.tencent.mmkv.MMKV;
 import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
@@ -10,6 +14,7 @@ import com.yausername.youtubedl_android.YoutubeDLResponse;
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 import java.io.File;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import kotlin.Unit;
@@ -37,11 +42,30 @@ public class Downloader {
     details.setDescription(info.getDescription());
     details.setDuration((long) info.getDuration());
     details.setThumbnail(info.getThumbnail());
-    details.setFormats(info.getFormats());
     return details;
   }
 
-  public static synchronized DownloadDetails infoWithCache(String url) throws Exception {
+  @Nullable
+  private static synchronized DownloadDetails info(String url, String detailsData) {
+    // Try to parse detail from video data
+    var object = JsonParser.parseString(detailsData).getAsJsonObject();
+
+    if (object.has("videoDetails")) {
+      var detailsObj = object.getAsJsonObject("videoDetails");
+      String videoId = detailsObj.get("videoId").getAsString();
+      return new DownloadDetails(
+          videoId,
+          detailsObj.get("title").getAsString(),
+          detailsObj.get("author").getAsString(),
+          detailsObj.get("shortDescription").getAsString(),
+          detailsObj.get("lengthSeconds").getAsLong(),
+          String.format("https://img.youtube.com/vi/%s/maxresdefault.jpg", videoId));
+    }
+    return null;
+  }
+
+  @NonNull
+  private static String getVideoID(String url) {
     // get video id from url
     Pattern pattern =
         Pattern.compile(
@@ -50,20 +74,40 @@ public class Downloader {
     Matcher matcher = pattern.matcher(url);
     if (matcher.matches()) {
       String id = matcher.group(1);
-      DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
-      // validate cached details
-      if (details == null
-          || details.getTitle() == null
-          || details.getAuthor() == null
-          || details.getThumbnail() == null
-          || details.getFormats() == null
-          || details.getFormats().isEmpty()) {
-        details = info(url);
-        cache.encode(id, gson.toJson(details), 60 * 60 * 24 * 7);
-      }
-      return details;
+      if (id == null) throw new RuntimeException("Invalid url");
+      return id;
     }
     throw new RuntimeException("Invalid url");
+  }
+
+  public static synchronized DownloadDetails infoWithCache(String url, String detailsData)
+      throws Exception {
+    String id = getVideoID(url);
+    DownloadDetails details = gson.fromJson(cache.decodeString(id), DownloadDetails.class);
+    // validate cached details
+    if (details == null
+        || details.getTitle() == null
+        || details.getAuthor() == null
+        || details.getThumbnail() == null) {
+      details = info(url, detailsData); // faster
+      if (details == null) details = info(url);
+      cache.encode(id, gson.toJson(details), 60 * 60 * 24 * 7);
+    }
+    return details;
+  }
+
+  public static synchronized List<VideoFormat> fetchFormats(String url)
+      throws YoutubeDL.CanceledException, YoutubeDLException, InterruptedException {
+    String key = "formats:" + getVideoID(url);
+    if (cache.decodeString(key) != null) {
+      return gson.fromJson(cache.decodeString(key), new TypeToken<List<VideoFormat>>() {}.getType());
+    } else {
+      YoutubeDLRequest request = new YoutubeDLRequest(url);
+      request.addOption("--retries", 3);
+      VideoInfo info = YoutubeDL.getInstance().getInfo(request);
+      cache.encode(key, gson.toJson(info.getFormats()), 60 * 60 * 24 * 7);
+      return info.getFormats();
+    }
   }
 
   public static void download(
@@ -80,7 +124,10 @@ public class Downloader {
     request.addOption("-f", "bestaudio[ext=m4a]");
     request.addOption("-o", output.getAbsolutePath() + ".m4a");
     if (video_format != null && video_format.getFormatId() != null) {
-      request.addOption("-f", String.format("%s+bestaudio[ext=m4a]", video_format.getFormatId()));
+      request.addOption(
+          "-f",
+          String.format(
+              "bestvideo[height<=%s][ext=mp4]+bestaudio[ext=m4a]", video_format.getFormatId()));
       request.addOption("-o", output.getAbsolutePath());
     }
     YoutubeDLResponse response = YoutubeDL.getInstance().execute(request, processId, callback);
