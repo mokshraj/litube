@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.hhst.litube"
-        minSdk = 26
+        minSdk = 24
         targetSdk = 35
         versionCode = 17
         versionName = "1.5.2"
